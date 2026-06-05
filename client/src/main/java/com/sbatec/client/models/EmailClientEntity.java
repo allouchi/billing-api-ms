@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-@Entity(name = "T_Email_Client")
+@Entity
+@Table(name = "T_Email_Client")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

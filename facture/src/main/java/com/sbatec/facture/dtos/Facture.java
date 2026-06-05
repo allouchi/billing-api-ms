@@ -4,6 +4,8 @@ package com.sbatec.facture.dtos;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
@@ -36,4 +38,5 @@ public class Facture {
     Long prestationId;
     boolean sended;
     String taxType;
+    BigDecimal montantTvaPaye;
 }

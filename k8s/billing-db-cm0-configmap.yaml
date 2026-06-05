@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: billing-db-cm0
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS `user-db`;
+    CREATE DATABASE IF NOT EXISTS `company-db`;
+    CREATE DATABASE IF NOT EXISTS `client-db`;
+    CREATE DATABASE IF NOT EXISTS `prestation-db`;
+    CREATE DATABASE IF NOT EXISTS `consultant-db`;
+    CREATE DATABASE IF NOT EXISTS `facture-db`;
+    
+    CREATE USER IF NOT EXISTS 'app_user'@'%' IDENTIFIED BY 'app_pass';
+    
+    GRANT ALL PRIVILEGES ON `user-db`.* TO 'app_user'@'%';
+    GRANT ALL PRIVILEGES ON `company-db`.* TO 'app_user'@'%';
+    GRANT ALL PRIVILEGES ON `client-db`.* TO 'app_user'@'%';
+    GRANT ALL PRIVILEGES ON `consultant-db`.* TO 'app_user'@'%';
+    GRANT ALL PRIVILEGES ON `prestation-db`.* TO 'app_user'@'%';
+    GRANT ALL PRIVILEGES ON `facture-db`.* TO 'app_user'@'%';
+
+    FLUSH PRIVILEGES;

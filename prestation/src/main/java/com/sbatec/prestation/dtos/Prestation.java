@@ -23,7 +23,6 @@ public class Prestation {
     Long companyId;
     Long clientId;
     Long consultantId;
-
     Client client;
     Consultant consultant;
 }

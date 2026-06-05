@@ -1,0 +1,66 @@
+apiVersion: apps/apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gateway-service
+  name: gateway-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - env:
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: gateway
+          image: gateway-service
+          imagePullPolicy: Never
+          name: gateway-service
+          ports:
+            - containerPort: 8181
+              protocol: TCP
+
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8181
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 16
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8181
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gateway-service
+  name: gateway-service
+spec:
+  # ============================================================
+  # MODIFICATION ICI : On passe de NodePort à LoadBalancer
+  # ============================================================
+  type: LoadBalancer
+  ports:
+    - name: "8181"
+      port: 8181
+      targetPort: 8181
+  selector:
+    app: gateway-service

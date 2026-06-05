@@ -44,7 +44,7 @@ public class CompanyEntity {
     @Column(name = "checked")
     Boolean checked;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "adresse_id")
     AdresseEntity adresse;
 

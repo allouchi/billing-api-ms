@@ -6,10 +6,11 @@ import com.sbatec.prestation.dtos.Prestation;
 import com.sbatec.prestation.models.PrestationEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {Client.class, Consultant.class})
+@Mapper(componentModel = "spring", unmappedSourcePolicy = ReportingPolicy.IGNORE, uses = {Client.class, Consultant.class})
 public interface PrestationMapper {
 
     @Mapping(target = "clientId", source = "clientId")

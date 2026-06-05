@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: prestation-service
+  name: prestation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prestation-service
+  template:
+    metadata:
+      labels:
+        app: prestation-service
+    spec:
+      containers:
+        - env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker" # <--- Active application-docker.properties (port 9000)
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: "prestation"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: app_pass
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://billing-db:3307/prestation-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: app_user
+          image: prestation-service
+          imagePullPolicy: Never
+          name: prestation-service
+          ports:
+            - containerPort: 9000
+              protocol: TCP
+
+          # ============================================================
+          # SONDE DE DÉMARRAGE CORRIGÉE (HTTPGET SANS CURL)
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9000
+            failureThreshold: 60
+            periodSeconds: 5
+            timeoutSeconds: 5
+          # ============================================================
+
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: prestation-service
+  name: prestation-service
+spec:
+  ports:
+    - name: "9000"
+      port: 9000
+      targetPort: 9000
+  selector:
+    app: prestation-service

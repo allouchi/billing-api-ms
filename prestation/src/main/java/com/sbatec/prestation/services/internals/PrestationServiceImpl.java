@@ -3,6 +3,7 @@ package com.sbatec.prestation.services.internals;
 import com.sbatec.prestation.dtos.Client;
 import com.sbatec.prestation.dtos.Consultant;
 import com.sbatec.prestation.dtos.Prestation;
+import com.sbatec.prestation.exceptions.ErrorCatalog;
 import com.sbatec.prestation.mappers.PrestationMapper;
 import com.sbatec.prestation.models.PrestationEntity;
 import com.sbatec.prestation.repository.PrestationJpaRepository;
@@ -12,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +51,9 @@ public class PrestationServiceImpl implements PrestationService {
 
     @Override
     public Prestation updatePrestation(Prestation prestation) {
-        return null;
+        Optional.ofNullable(prestation).orElseThrow(() -> new ServiceException(ErrorCatalog.BAD_DATA_ARGUMENT.getMessage()));
+        PrestationEntity prestationEntity = prestationJpaRepository.save(prestationMapper.toEntity(prestation));
+        return prestationMapper.toDto(prestationEntity);
     }
 
     @Override
@@ -73,7 +77,6 @@ public class PrestationServiceImpl implements PrestationService {
         List<Long> consultantIds = prestations.stream().map(Prestation::getConsultantId).distinct().toList();
 
         // 2. Déclenchement des appels réseau EN PARALLÈLE
-
         // Tâche asynchrone pour les Clients
         CompletableFuture<Map<Long, Client>> clientsFuture = CompletableFuture.supplyAsync(() ->
                 clientRestClient.findAllByIds(clientIds).stream()
@@ -101,12 +104,11 @@ public class PrestationServiceImpl implements PrestationService {
             prestation.setClient(clientMap.get(prestation.getClientId()));
             prestation.setConsultant(consultantMap.get(prestation.getConsultantId()));
         });
-
         return prestations;
     }
 
     @Override
     public void deleteById(Long id) {
-
+        prestationJpaRepository.deleteById(id);
     }
 }

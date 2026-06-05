@@ -3,7 +3,7 @@ package com.sbatec.facture.controllers;
 
 import com.sbatec.facture.config.ApplicationProperties;
 import com.sbatec.facture.dtos.Facture;
-import com.sbatec.facture.services.internals.FactureService;
+import com.sbatec.facture.services.internals.facture.FactureService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -31,13 +31,14 @@ public class FactureController {
     FactureService factureService;
     ApplicationProperties resources;
 
+
     @GetMapping("/noPage/{siret}")
     public List<Facture> findAllBySiret(@PathVariable String siret, Pageable pageable) {
         log.info("findBySiret by siret");
         return factureService.findAllBySiret(siret);
     }
 
-    @GetMapping("/page/{siret}")
+    @GetMapping("/{siret}")
     public Page<Facture> findBySiret(@PathVariable String siret, Pageable pageable) {
         log.info("findBySiret by siret and pageable");
         PageRequest pageableReq = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
@@ -45,17 +46,11 @@ public class FactureController {
     }
 
 
-    @GetMapping("/page/{siret}/{exercise}")
+    @GetMapping("/{siret}/{exercise}")
     public Page<Facture> findBySiretAndExercise(@PathVariable String siret, @PathVariable String exercise, Pageable pageable) {
         log.info("findBySiretAndExercise by siret, exercice and pageable");
         PageRequest pageableReq = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
         return factureService.findBySiretAndExercice(siret, exercise, pageableReq);
-    }
-
-    @GetMapping("noPage/{siret}/{exercise}")
-    public List<Facture> findAllBySiretAndExercise(@PathVariable String siret, @PathVariable String exercise) {
-        log.info("findBySiretAndExercise by siret, exercice and pageable");
-        return factureService.findBySiretAndExercice(siret, exercise);
     }
 
 
@@ -65,14 +60,12 @@ public class FactureController {
         factureService.deleteFacture(factureId);
     }
 
-
     @PostMapping(value = "/create")
     public Facture createFacture(@RequestBody Facture facture) throws IOException, URISyntaxException {
         log.info("Create facture");
 
         Path repertoire = Paths.get(resources.getPathFilePdf());
         Files.createDirectories(repertoire);
-
         return factureService.addFacture(facture,
                 resources.getPathFilePdf(),
                 resources.getFichierSuiviFactures());
@@ -93,4 +86,5 @@ public class FactureController {
         PageRequest pageableReq = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
         return factureService.searchFactures(siret, searchTerm, pageableReq);
     }
+
 }

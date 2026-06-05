@@ -1,0 +1,321 @@
+services:
+
+  # =========================================================================
+  #  SINGLE DATABASE SERVER
+  # =========================================================================
+  billing-db:
+    image: mysql:8.0
+    container_name: billing-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d
+      - mysql_global_data:/var/lib/mysql
+    networks:
+      - sbatec-net
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # =========================================================================
+  # PHPMYADMIN
+  # =========================================================================
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - billing-db
+    environment:
+      PMA_HOST: billing-db
+      PMA_PORT: 3306
+    ports:
+      - "8080:80"
+    networks:
+      - sbatec-net
+
+  # =========================================================================
+  # DISCOVERY (EUREKA)
+  # =========================================================================
+  discovery-service:
+    build: ./discovery
+    container_name: discovery-service
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8761/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - sbatec-net
+
+  # =========================================================================
+  # GATEWAY
+  # =========================================================================
+  gateway-service:
+    build: ./gateway
+    container_name: gateway-service
+    restart: unless-stopped
+    ports:
+      - "8181:8181"
+    environment:
+      - SPRING_APPLICATION_NAME=gateway
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:8181/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+
+  # =========================================================================
+  # AUTHENT SERVICE
+  # =========================================================================
+  authent-service:
+    build: ./authent
+    container_name: authent-service
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "5005:5005"
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - SPRING_APPLICATION_NAME=authent
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/user-db?serverTimezone=UTC&createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:3000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+  # =========================================================================
+  # COMPANY SERVICE
+  # =========================================================================
+  company-service:
+    build: ./company
+    container_name: company-service
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - SPRING_APPLICATION_NAME=company
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      #- CONFIG_SERVICE_URL=http://config-service:8888
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8888/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/company-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+      - SPRING_CLOUD_CONFIG_FAIL_FAST=false # FIX : Tolérance aux pannes activée
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost:5000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      #config-service:
+      #  condition: service_healthy
+    networks:
+      - sbatec-net
+  # =========================
+  # CLIENT SERVICE
+  # =========================
+  client-service:
+    build: ./client
+    container_name: client-service
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    environment:
+      - SPRING_APPLICATION_NAME=client
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      #- CONFIG_SERVICE_URL=http://config-service:8888
+      # On force l'import ici au niveau de Docker :
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8888/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/client-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      #config-service:
+      #  condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+  # =========================
+  # CONSULTANT SERVICE
+  # =========================
+  consultant-service:
+    build: ./consultant
+    container_name: consultant-service
+    restart: unless-stopped
+    ports:
+      - "6000:6000"
+    environment:
+      - SPRING_APPLICATION_NAME=consultant
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      #- CONFIG_SERVICE_URL=http://config-service:8888
+      # On force l'import ici au niveau de Docker :
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8888/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/consultant-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:6000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      #config-service:
+      #  condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+
+  # =========================
+  # PRESTATION SERVICE
+  # =========================
+  prestation-service:
+    build: ./prestation
+    container_name: prestation-service
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - SPRING_APPLICATION_NAME=prestation
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      #- CONFIG_SERVICE_URL=http://config-service:8888
+      # On force l'import ici au niveau de Docker :
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8888/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/prestation-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      #config-service:
+      #  condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+
+  # =========================
+  # FACTURE SERVICE
+  # =========================
+  facture-service:
+    build: ./facture
+    container_name: facture-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "5004:5004"
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5004
+      - SPRING_APPLICATION_NAME=facture
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      #- CONFIG_SERVICE_URL=http://config-service:8888
+      # On force l'import ici au niveau de Docker :
+      #- SPRING_CONFIG_IMPORT=optional:configserver:http://config-service:8888/
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/facture-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+      # -------------------------------------------------------------
+      # CONFIGURATION DES PROPRIÉTÉS (Remplacement du @Value)
+      # Note : On utilise des MAJUSCULES et des UNDERSCORES.
+      # Spring Boot fait la correspondance automatiquement (Relaxed Binding).
+      # -------------------------------------------------------------
+      # Chemins de stockage (adaptés pour Linux à l'intérieur du conteneur)
+      - STORAGE_PATHROOT_PDF=/data/pdf
+      - STORAGE_PATHROOT_LIBELLE_FACTURE=/data/libelle-facture
+      - STORAGE_PATHROOT_LIBELLE_CHARGES=/data/libelle-charges
+      - STORAGE_PATHROOT_LIBELLE_RELEVE=/data/libelle-releve
+      - FICHIER_IMPORT_CSV=/data/csv/import.csv
+      - FICHIER_SUIVI_NAME=suivi_factures.csv
+      - MAIL_FROM=mustapha.aliane@free.fr
+      - MAIL_BCC=moustapha.aliane@gmail.com
+      - MAIL_USERNAME=mustapha.aliane@free.fr
+      - MAIL_PASSWORD=Maroc2026()!!
+
+      # -------------------------------------------------------------
+      # VOLUMES : Pour lier les dossiers de ton PC au conteneur Docker
+      # À gauche du ":" = Ton vrai dossier sous Windows (C:\temp\...)
+      # À droite du ":" = Le dossier virtuel dans le conteneur Linux (/data/...)
+      # -------------------------------------------------------------
+    volumes:
+      - C:/temp/pdf:/data/pdf
+      - C:/temp/csv:/data/csv
+      - C:/temp/libelles:/data/libelle-facture # Exemple pour regrouper les libellés
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      #config-service:
+      #  condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+# =========================================================================
+# CONFIGURATIONS GLOBALES
+# =========================================================================
+volumes:
+  mysql_global_data:
+
+networks:
+  sbatec-net:
+    driver: bridge

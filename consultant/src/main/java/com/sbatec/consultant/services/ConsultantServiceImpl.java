@@ -26,7 +26,8 @@ public class ConsultantServiceImpl implements ConsultantService {
 
     @Override
     public Consultant addConsultant(Consultant consultant) {
-        return null;
+        ConsultantEntity consultantEntity = consultantJpaRepository.save(consultantMapper.toEntity(consultant));
+        return consultantMapper.toDto(consultantEntity);
     }
 
     @Override

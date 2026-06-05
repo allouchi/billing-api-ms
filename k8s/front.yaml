@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front
+  labels:
+    app: front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front
+  template:
+    metadata:
+      labels:
+        app: front
+    spec:
+      containers:
+        - name: front
+          image: front-service:latest
+          ports:
+            - containerPort: 80
+          imagePullPolicy: Never
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  labels:
+    app: front
+spec:
+  # ============================================================
+  # MODIFICATION : En LoadBalancer pour l'accès local
+  # ============================================================
+  type: LoadBalancer
+  ports:
+    - name: "http"
+      port: 80          # Accessible sur http://localhost
+      targetPort: 80    # Port interne du conteneur Nginx/Angular
+  selector:
+    app: front

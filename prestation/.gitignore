@@ -1,33 +1,99 @@
-HELP.md
+#################################################
+# Java / Spring Boot
+#################################################
+
+*.class
+*.log
+*.war
+*.jar
+*.ear
+
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+out/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Spring Boot temp files
+*.pid
+*.seed
+*.lock
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+#################################################
+# Maven
+#################################################
+
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+#################################################
+# IntelliJ IDEA
+#################################################
+
+.idea/
 *.iml
+*.iws
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+# IntelliJ run configs
+.idea/runConfigurations/
 
-### VS Code ###
+#################################################
+# Eclipse (si jamais)
+#################################################
+
+.project
+.classpath
+.settings/
+
+#################################################
+# VS Code (optionnel)
+#################################################
+
 .vscode/
+
+#################################################
+# OS Files
+#################################################
+
+.DS_Store
+Thumbs.db
+
+#################################################
+# Logs
+#################################################
+
+logs/
+*.log
+
+#################################################
+# Environment / secrets
+#################################################
+
+.env
+.env.*
+
+
+#################################################
+# Test / coverage
+#################################################
+
+coverage/
+*.lcov
+jacoco.exec
+
+#################################################
+# Temporary files
+#################################################
+
+*.tmp
+*.swp
+*~
+
+#################################################
+# Docker (optionnel)
+#################################################
+
+docker-compose.override.yml

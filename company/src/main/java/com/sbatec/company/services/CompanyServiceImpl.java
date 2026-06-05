@@ -1,6 +1,7 @@
 package com.sbatec.company.services;
 
 import com.sbatec.company.dtos.Company;
+import com.sbatec.company.exceptions.CompanyNotFoundException;
 import com.sbatec.company.mappers.CompanyMapper;
 import com.sbatec.company.models.CompanyEntity;
 import com.sbatec.company.repository.CompanyJpaRepository;
@@ -32,9 +33,19 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    public Company updateCompany(Company company) {
-        CompanyEntity companyEntity = companyJpaRepository.save(companyMapper.toEntity(company));
-        return companyMapper.toDto(companyEntity);
+    public Company updateCompany(Company companyDto) {
+        // 1. Récupérer l'entité existante depuis la base de données
+        CompanyEntity existingEntity = companyJpaRepository.findById(companyDto.getId())
+                .orElseThrow(() -> new CompanyNotFoundException("Company not found with id: " + companyDto.getId()));
+
+        // 2. Fusionner uniquement les modifications du DTO dans l'entité managée
+        companyMapper.updateEntityFromDto(companyDto, existingEntity);
+
+        // 3. Sauvegarder l'entité mise à jour
+        CompanyEntity updatedEntity = companyJpaRepository.save();
+
+        // 4. Retourner le DTO tout neuf
+        return companyMapper.toDto(updatedEntity);
     }
 
 

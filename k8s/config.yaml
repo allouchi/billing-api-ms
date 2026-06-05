@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: config-service
+  name: config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: config-service
+    spec:
+      containers:
+        - env:
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS
+              value: file:/app/config-repo
+            - name: SPRING_PROFILES_ACTIVE
+              value: native
+          image: config-service
+          imagePullPolicy: Never
+          name: config-service
+          ports:
+            - containerPort: 8888
+              protocol: TCP
+
+          # ============================================================
+          # 1. SONDE DE DÉMARRAGE (Laisse le temps au Config Server)
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+
+          # ============================================================
+          # 2. SONDE DE VIE (Prend le relais après le démarrage)
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: config-service
+  name: config-service
+spec:
+  ports:
+    - name: "8888"
+      port: 8888
+      targetPort: 8888
+  selector:
+    app: config-service

@@ -12,7 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-@Entity(name = "T_Client")
+@Entity
+@Table(name = "T_Client")
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
@@ -30,13 +31,13 @@ public class ClientEntity {
     @Column(name = "social_reason", nullable = false)
     String socialReason;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "adresse_id")
     AdresseEntity adresseClient;
 
     @OneToMany(
             mappedBy = "client",
-            fetch = FetchType.EAGER,
+            fetch = FetchType.LAZY,
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )

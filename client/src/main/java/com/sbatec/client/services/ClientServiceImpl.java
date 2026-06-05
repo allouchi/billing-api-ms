@@ -52,13 +52,34 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public String deleteClientBySocialReason(String SocialReason) {
-        return "";
+    public void deleteClientBySocialReason(String socialReason) {
+        clientJpaRepository.deleteBySocialReasonContainingIgnoreCase(socialReason);
     }
 
     @Override
-    public Client updateClient(Long id, String socialReason, String numero, String rue, String cp, String ville, String pays, String emails) {
-        return null;
+    public Client updateClient(Long id, String socialReason, String numero, String rue, String codePostal, String ville, String pays, String emails) {
+        Adresse adresse = Adresse.builder()
+                .numero(numero)
+                .rue(rue)
+                .codePostal(codePostal)
+                .localite(ville)
+                .pays(pays)
+                .build();
+
+        String[] mails = emails.split(";");
+        List<EmailClient> emailList = new ArrayList<>();
+        for (String mail : mails) {
+            EmailClient emailClient = new EmailClient();
+            emailClient.setId(null);
+            emailClient.setEmail(mail);
+            emailList.add(emailClient);
+        }
+        Client client = Client.builder().
+                socialReason(socialReason).
+                adresseClient(adresse).emails(emailList).
+                build();
+        ClientEntity clientEntity = clientJpaRepository.save(clientMapper.toEntity(client));
+        return clientMapper.toDto(clientEntity);
     }
 
     @Override

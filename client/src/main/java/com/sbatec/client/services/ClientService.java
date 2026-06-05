@@ -16,7 +16,7 @@ public interface ClientService {
 
     void deleteClientById(Long id);
 
-    String deleteClientBySocialReason(String SocialReason);
+    void deleteClientBySocialReason(String SocialReason);
 
     Client updateClient(Long id,
                         String socialReason,

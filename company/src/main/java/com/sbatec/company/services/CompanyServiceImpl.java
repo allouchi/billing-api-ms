@@ -42,7 +42,7 @@ public class CompanyServiceImpl implements CompanyService {
         companyMapper.updateEntityFromDto(companyDto, existingEntity);
 
         // 3. Sauvegarder l'entité mise à jour
-        CompanyEntity updatedEntity = companyJpaRepository.save();
+        CompanyEntity updatedEntity = companyJpaRepository.save(existingEntity);
 
         // 4. Retourner le DTO tout neuf
         return companyMapper.toDto(updatedEntity);

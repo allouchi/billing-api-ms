@@ -3,6 +3,7 @@ package com.sbatec.facture.mappers;
 import com.sbatec.facture.dtos.Exercise;
 import com.sbatec.facture.models.ExerciseEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
@@ -18,4 +19,6 @@ public interface ExerciseMapper {
     List<Exercise> toDtoList(List<ExerciseEntity> entities);
 
     List<ExerciseEntity> toEntityList(List<Exercise> dtos);
+
+    void updateEntityFromDto(Exercise dto, @MappingTarget ExerciseEntity entity);
 }

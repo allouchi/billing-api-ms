@@ -310,6 +310,18 @@ services:
         condition: service_healthy
     networks:
       - sbatec-net
+  # =========================
+  # ANGULAR FRONTEND
+  # =========================
+  front-service:
+    build: ../bill-front-ng
+    image: billing-api-ms-front-service
+    container_name: front-service
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    networks:
+      - sbatec-net
 # =========================================================================
 # CONFIGURATIONS GLOBALES
 # =========================================================================

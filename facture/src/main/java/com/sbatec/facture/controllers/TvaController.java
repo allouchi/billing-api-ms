@@ -1,9 +1,7 @@
 package com.sbatec.facture.controllers;
 
-import com.sbatec.facture.dtos.Exercise;
 import com.sbatec.facture.dtos.Tva;
 import com.sbatec.facture.dtos.TvaInfo;
-import com.sbatec.facture.services.internals.tva.ExerciseService;
 import com.sbatec.facture.services.internals.tva.TvaService;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -14,29 +12,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/tvas")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class TvaController {
 
     TvaService tvaService;
-    ExerciseService exerciseService;
-
-    @GetMapping("/exerciceRef")
-    public List<Exercise> findAllExercises() {
-        log.info("find all exercises ref");
-        List<Exercise> response = exerciseService.findExercisesRef();
-        return response.stream().sorted(Comparator.comparing(Exercise::getExercise).reversed())
-                .collect(Collectors.toList());
-    }
 
     @GetMapping("/tvasInfo/{siret}/{exercise}")
     public TvaInfo getTvaInfoByExercise(@PathVariable String exercise, @PathVariable String siret) {

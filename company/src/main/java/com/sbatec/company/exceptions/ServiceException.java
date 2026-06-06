@@ -1,16 +1,12 @@
 package com.sbatec.company.exceptions;
 
-import com.sbatec.facture.exceptions.ErrorCatalog;
+
 import lombok.Getter;
 
 @Getter
 public class ServiceException extends RuntimeException {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
-
+   
     private final ErrorCatalog errorCatalog;
 
     public ServiceException(ErrorCatalog errorCatalog) {

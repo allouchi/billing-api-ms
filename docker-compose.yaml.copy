@@ -350,12 +350,9 @@ services:
     networks:
       - sbatec-net
 
-    # =========================
-    # ANGULAR FRONTEND
-    # =========================
-    # =========================
-    # ANGULAR FRONTEND
-    # =========================
+  # =========================
+  # ANGULAR FRONTEND
+  # =========================
   front-service:
     build: ../bill-front-ng
     image: billing-api-ms-front-service

@@ -20,23 +20,24 @@ public class Facture {
     String dateFacturation;
     String dateEcheance;
     String dateEncaissement;
-    float montantTVA;
-    float montantNetTVA;
-    float prixTotalHT;
-    float prixTotalTTC;
-    long nbJourRetard;
-    float fraisRetard;
-    Float tarifHT;
     String factureStatus;
     String statusDesc;
-    float quantite;
     String numeroCommande;
     String clientPrestation;
     String moisFacture;
     String exercice;
     String siret;
-    Long prestationId;
-    boolean sended;
     String taxType;
+    BigDecimal montantTVA;
+    BigDecimal montantNetTVA;
+    BigDecimal prixTotalHT;
+    BigDecimal prixTotalTTC;
+    BigDecimal fraisRetard;
+    BigDecimal tarifHT;
+    BigDecimal quantite;
     BigDecimal montantTvaPaye;
+    Long nbJourRetard;
+    Long prestationId;
+    Boolean sended;
+
 }

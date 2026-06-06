@@ -51,6 +51,4 @@ CREATE TABLE IF NOT EXISTS `user_roles` (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Association des Rôles (Mustapha est ADMIN et CONSULT)
-INSERT IGNORE INTO `user_roles` (`user_id`, `role_id`)
-VALUES (1, 1),
-       (1, 2);
+INSERT INTO `user_roles` VALUES (1,1),(2,1),(1,2),(3,2),(4,2),(1,3),(3,3),(4,3);

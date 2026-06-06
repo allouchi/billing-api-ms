@@ -3,6 +3,7 @@ package com.sbatec.facture.mappers;
 import com.sbatec.facture.dtos.Facture;
 import com.sbatec.facture.models.FactureEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
@@ -18,4 +19,5 @@ public interface FactureMapper {
 
     List<FactureEntity> toEntityList(List<Facture> dtos);
 
+    void updateEntityFromDto(Facture dto, @MappingTarget FactureEntity entity);
 }

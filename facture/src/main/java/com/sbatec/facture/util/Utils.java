@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -144,18 +145,6 @@ public class Utils {
         return 0;
     }
 
-    /**
-     * @param facture
-     * @param joursRetard
-     * @return
-     */
-    public static float calculerFraisRetard(Facture facture, long joursRetard) {
-        if (facture == null) {
-            return 0;
-        }
-        float div = (float) joursRetard / 365;
-        return 1 * ((0.1f * facture.getPrixTotalHT() * div) + 40);
-    }
 
     /**
      *
@@ -276,7 +265,7 @@ public class Utils {
         String numeroFacture = facture.getNumeroFacture();
         String client = facture.getClientPrestation();
         int anneeCourante = LocalDate.now().getYear();
-        float nbJoursFacture = facture.getQuantite();
+        BigDecimal nbJoursFacture = facture.getQuantite();
 
         return """
                 <!DOCTYPE html>

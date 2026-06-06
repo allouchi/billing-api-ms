@@ -3,6 +3,8 @@ package com.sbatec.facture.dtos;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,8 +13,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Prestation {
     Long id;
-    long delaiPaiement;
-    Float tarifHT;
+    Long delaiPaiement;
+    BigDecimal tarifHT;
     String numeroCommande;
     String clientPrestation;
     String designation;

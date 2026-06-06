@@ -44,12 +44,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findAllUsers() {
-        return List.of();
+        return userMapper.toDtoList(userJpaRepository.findAll());
     }
 
     @Override
     public User findUserById(Long id) {
-        return null;
+        UserEntity user = userJpaRepository.findById(id).orElseThrow(() -> new UserNotFoundException("Not found"));
+        return userMapper.toDto(user);
     }
 
     @Override

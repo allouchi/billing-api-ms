@@ -71,7 +71,7 @@ public class ControllerAdvisor {
 
     @ResponseStatus(code = HttpStatus.NOT_FOUND)
     @ResponseBody
-    @ExceptionHandler(com.sbatec.facture.exceptions.FactureNotFoundException.class)
+    @ExceptionHandler(FactureNotFoundException.class)
     public String factureNotFound(FactureNotFoundException ex) {
         return ex.getMessage();
     }

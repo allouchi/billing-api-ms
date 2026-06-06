@@ -1,13 +1,8 @@
 package com.sbatec.company.exceptions;
 
-import com.sbatec.facture.exceptions.ErrorCatalog;
 
 public class TvaNotFoundException extends RuntimeException {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
 
     private ErrorCatalog errorCatalog;
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -151,20 +152,21 @@ public class EditionReportImpl implements EditionReportService {
     public Facture buildFacture(Prestation prestation, Facture facture, List<Facture> factureHistory) {
         String moisId = facture.getMoisFacture();
         String moisFacture = Utils.convertMoisFacture(String.valueOf(facture.getMoisFacture()));
-        float tarifHT = prestation.getTarifHT();
-        float prixTotalHT = tarifHT * facture.getQuantite();
-        float tva = prixTotalHT * 0.2f;
+        BigDecimal tarifHT = prestation.getTarifHT();
+        BigDecimal prixTotalHT = tarifHT.multiply(facture.getQuantite());
+        BigDecimal pourcentage = new BigDecimal("0.2");
+        BigDecimal tva = pourcentage.multiply(prixTotalHT);
         facture.setPrixTotalHT(prixTotalHT);
         facture.setTarifHT(prestation.getTarifHT());
-        facture.setPrixTotalTTC(prixTotalHT + tva);
-        facture.setMontantNetTVA(facture.getMontantTVA() - 30);
+        facture.setPrixTotalTTC(prixTotalHT.add(tva));
+        facture.setMontantNetTVA(facture.getMontantTVA().subtract(BigDecimal.valueOf(30)));
         facture.setMontantTVA(tva);
         facture.setDateFacturation(Utils.calculDateFacturation(moisId));
         facture.setDateEcheance(Utils.calculerDateEcheance(prestation, moisId));
         facture.setFactureStatus(FactureStatus.NON.getCode());
         facture.setStatusDesc(FactureStatus.NON.getDescription());
-        facture.setFraisRetard(0);
-        facture.setNbJourRetard(0);
+        facture.setFraisRetard(BigDecimal.valueOf(0));
+        facture.setNbJourRetard(0L);
         facture.setNumeroCommande(prestation.getNumeroCommande());
         facture.setClientPrestation(prestation.getClientPrestation());
         facture.setPrestationId(prestation.getId());
@@ -225,15 +227,15 @@ public class EditionReportImpl implements EditionReportService {
         // infos factures
         String dateFacturation = facture.getDateFacturation();
         String numeroFacture = facture.getNumeroFacture();
-        float montantHT = facture.getPrixTotalHT();
-        float montantTTC = facture.getPrixTotalTTC();
-        float montantTva = facture.getMontantTVA();
-        float quantite = facture.getQuantite();
+        BigDecimal montantHT = facture.getPrixTotalHT();
+        BigDecimal montantTTC = facture.getPrixTotalTTC();
+        BigDecimal montantTva = facture.getMontantTVA();
+        BigDecimal quantite = facture.getQuantite();
         String moisPrestation = facture.getMoisFacture();
         String communeDateEdition = adresseCompany.getLocalite() + ", le " + dateFacturation;
 
         // infos prestation
-        float tarifHT = prestation.getTarifHT();
+        BigDecimal tarifHT = prestation.getTarifHT();
         String numeroCommande = prestation.getNumeroCommande();
         long delaiPaiement = prestation.getDelaiPaiement();
         String clientPrestation = prestation.getClientPrestation();

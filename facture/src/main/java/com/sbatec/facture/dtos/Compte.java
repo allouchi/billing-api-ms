@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -13,16 +12,13 @@ import java.time.LocalDate;
 @Builder
 @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Tva {
-
+public class Compte {
     Long id;
-    String datePayment;
-    LocalDate datePaymentSorted;
-    String dateEncaissement;
-    BigDecimal montantPayment;
-    String siret;
+    String typeOperation;
+    String dateOperation;
+    String monthOperation;
+    String descriptionOperation;
+    BigDecimal montantOperation;
     String exercise;
-    String numeroFacture;
-    BigDecimal montantTTC;
-    BigDecimal montantTvaFacture;
+    String siret;
 }

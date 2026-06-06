@@ -2,10 +2,8 @@ package com.sbatec.authentserver.controllers;
 
 import com.sbatec.authentserver.config.CustomUserDetailsService;
 import com.sbatec.authentserver.config.JwtService;
-import com.sbatec.authentserver.dtos.AuthRequest;
-import com.sbatec.authentserver.dtos.AuthResponse;
-import com.sbatec.authentserver.dtos.RefreshRequest;
-import com.sbatec.authentserver.dtos.User;
+import com.sbatec.authentserver.dtos.*;
+import com.sbatec.authentserver.services.internals.RoleService;
 import com.sbatec.authentserver.services.internals.UserService;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -14,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,12 +27,14 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 @Validated
+@RequestMapping("/api")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
 
     static final String SPRING_SECURITY_CONTEXT_KEY = "SPRING_SECURITY_CONTEXT";
 
     UserService userService;
+    RoleService roleService;
     AuthenticationManager authManager;
     CustomUserDetailsService customUserDetailsService;
     JwtService jwtService;
@@ -42,7 +43,7 @@ public class UserController {
 
     @PostMapping({"/login", "/"})
     public ResponseEntity<AuthResponse> authenticate(@RequestBody AuthRequest request) {
-        log.info("=================== Authentification userName : {} ==========================", request.getUsername());
+        log.info("Authentification userName : {}", request.getUsername());
         AuthResponse authResponse = new AuthResponse();
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                 request.getUsername(),
@@ -87,22 +88,8 @@ public class UserController {
         return ResponseEntity.ok(authResponse);
     }
 
-    @GetMapping("/logout")
-    public ResponseEntity<String> logout() {
-        System.out.println();
-        return ResponseEntity.ok(null);
-    }
-
-
     @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping(value = "/{userName:.+}")
-    public User findByUserName(@PathVariable @NotNull String userName) {
-        log.info("Get user by Email : {}", userName);
-        return userService.findByUserName(userName);
-    }
-
-    @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping()
+    @GetMapping(value = "/users")
     public List<User> findAllUsers() {
         log.info("Get all users by Email");
         List<User> users = userService.findAllUsers();
@@ -114,6 +101,14 @@ public class UserController {
         }
         return users;
     }
+
+    @ResponseStatus(code = HttpStatus.OK)
+    @GetMapping(value = "/{userName:.+}")
+    public User findByUserName(@PathVariable @NotNull String userName) {
+        log.info("Get user by Email : {}", userName);
+        return userService.findByUserName(userName);
+    }
+
 
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping(value = "/{email:.+}/{password}")
@@ -150,5 +145,14 @@ public class UserController {
     public void deleteUser(@PathVariable @NotNull long id) {
         log.info("delete user by id : {}", id);
         userService.deleteUserById(id);
+    }
+
+
+    @Secured(value = {"ROLE_ADMIN", "ROLE_WRITE", "ROLE_READ"})
+    @GetMapping("/roles")
+    public ResponseEntity<List<Role>> getAllRoles() {
+        log.info("Get all role ref");
+        List<Role> roles = roleService.findAll();
+        return ResponseEntity.ok(roles);
     }
 }

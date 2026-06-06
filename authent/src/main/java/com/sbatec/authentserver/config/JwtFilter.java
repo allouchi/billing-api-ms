@@ -30,14 +30,21 @@ public class JwtFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-
-        // 1. Si c'est la route de login, on passe directement au filtre suivant sans rien faire
-        if (request.getServletPath().equals("/login") || request.getServletPath().equals("/refresh-token")) {
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        String path = request.getRequestURI();
+
+        // 1. Si c'est la route de login ou refresh, on passe directement au filtre suivant
+        if (path.contains("/api/login") || path.contains("/api/refresh-token")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String authHeader = request.getHeader("Authorization");
+        
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;

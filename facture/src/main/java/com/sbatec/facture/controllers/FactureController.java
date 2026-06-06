@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.List;
 @RequestMapping("/api/factures")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FactureController {
 

@@ -50,7 +50,7 @@ public class TvaServiceImpl implements TvaService {
             if (facture != null) {
                 tva.setMontantTTC(facture.getPrixTotalTTC());
                 if (facture.getMontantTVA() != null) {
-                    tva.setMontantTvaFacture(BigDecimal.valueOf(facture.getMontantTVA()));
+                    tva.setMontantTvaFacture(facture.getMontantTVA());
                 }
                 tva.setDateEncaissement(facture.getDateEncaissement());
             }
@@ -73,7 +73,7 @@ public class TvaServiceImpl implements TvaService {
 
         FactureEntity facture = factureJpaRepository.findByNumeroFacture(tva.getNumeroFacture());
         if (facture != null) {
-            tva.setMontantTvaFacture(BigDecimal.valueOf(facture.getMontantTVA()));
+            tva.setMontantTvaFacture(facture.getMontantTVA());
         }
         TvaEntity entity = tvaJpaRepository.save(tvaMapper.toEntity(tva));
         return tvaMapper.toDto(entity);
@@ -88,7 +88,7 @@ public class TvaServiceImpl implements TvaService {
         tva.setDatePayment(datePayment);
         FactureEntity facture = factureJpaRepository.findByNumeroFacture(tva.getNumeroFacture());
         if (facture != null) {
-            tva.setMontantTvaFacture(BigDecimal.valueOf(facture.getMontantTVA()));
+            tva.setMontantTvaFacture(facture.getMontantTVA());
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -135,13 +135,23 @@ public class TvaServiceImpl implements TvaService {
         if (Objects.isNull(facturesFiltred)) {
             return info;
         }
-
         BigDecimal totalTvaPaye = BigDecimal.ZERO;
         BigDecimal montantTvaFacture = BigDecimal.ZERO;
-        BigDecimal totalTvaNet = facturesFiltred.stream().map(e -> (BigDecimal.valueOf(e.getMontantTVA() - 30))).filter(obj -> true).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalTTC = facturesFiltred.stream().map(e -> BigDecimal.valueOf(e.getPrixTotalTTC())).filter(obj -> true).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalCAHorsTaxe = facturesFiltred.stream().map(e -> BigDecimal.valueOf(e.getPrixTotalHT())).filter(obj -> true).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+// 1. Correction du calcul de la TVA Nette (Soustraction de 30 avec .subtract())
+        BigDecimal totalTvaNet = facturesFiltred.stream()
+                .map(e -> e.getMontantTVA() != null ? e.getMontantTVA().subtract(new BigDecimal("30")) : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+// 2. Somme des Prix TTC (Pas besoin de valueOf car c'est déjà un BigDecimal)
+        BigDecimal totalTTC = facturesFiltred.stream()
+                .map(e -> e.getPrixTotalTTC() != null ? e.getPrixTotalTTC() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+// 3. Somme du CA HT (Pas besoin de valueOf car c'est déjà un BigDecimal)
+        BigDecimal totalCAHorsTaxe = facturesFiltred.stream()
+                .map(e -> e.getPrixTotalHT() != null ? e.getPrixTotalHT() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (exercise.equalsIgnoreCase(TOUS)) {
             listeTvaPayee = tvaJpaRepository.findBySiret(siret);

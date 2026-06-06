@@ -14,9 +14,6 @@ public class RoleServiceImpl implements RoleService {
     RoleJpaRepository roleJpaRepository;
     RoleMapper roleMapper;
 
-    public RoleServiceImpl(RoleJpaRepository roleJpaRepository) {
-    }
-
     @Override
     public List<Role> findAll() {
         return roleMapper.toDtoList(roleJpaRepository.findAll());

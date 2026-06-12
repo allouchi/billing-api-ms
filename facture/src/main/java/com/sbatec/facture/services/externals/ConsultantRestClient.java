@@ -9,13 +9,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "consultant")
 public interface ConsultantRestClient {
-    @GetMapping("/api/consultant/{id}")
+    @GetMapping("/api/consultants/{id}")
     @CircuitBreaker(name = "consultant", fallbackMethod = "getDefaultConsultant")
-    Consultant findBySiret(@PathVariable Long id);
+    Consultant findById(@PathVariable Long id);
 
     default Consultant getDefaultConsultant(Long id, Exception exception) {
         return Consultant.builder()
                 .fonction("Default function")
+                .firstName("firstName")
+                .lastName("lastName")
                 .email("Email")
                 .build();
     }

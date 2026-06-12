@@ -2,7 +2,9 @@
 -- =========================================================================
 -- 1. CREATION DE LA TABLE DES PRESTATIONS
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_prestation` (
+DROP TABLE IF EXISTS `t_prestation`;
+
+CREATE TABLE `t_prestation` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
     `client_prestation` VARCHAR(150) NOT NULL,
     `delai_paiement` INT DEFAULT 30,

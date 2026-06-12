@@ -20,13 +20,9 @@ public class PrestationController {
 
     PrestationService prestationService;
 
-    /**
-     *
-     * @param siret
-     * @return
-     */
+
     @GetMapping(value = "/{siret}")
-    public List<Prestation> findBySiret(@PathVariable String siret) {
+    public List<Prestation> getPrestationsBySiret(@PathVariable String siret) {
         log.info("get all prestations");
         return prestationService.findBySiret(siret);
     }

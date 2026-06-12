@@ -16,5 +16,6 @@ public class Client {
     Long id;
     String socialReason;
     List<EmailClient> emails;
+    String remoteError;
     Adresse adresseClient;
 }

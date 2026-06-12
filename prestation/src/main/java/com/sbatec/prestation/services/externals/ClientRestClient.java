@@ -2,6 +2,7 @@ package com.sbatec.prestation.services.externals;
 
 
 import com.sbatec.prestation.dtos.Client;
+import com.sbatec.prestation.dtos.EmailClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,9 +25,12 @@ public interface ClientRestClient {
     List<Client> findAllByIds(@RequestParam("ids") List<Long> ids);
 
     default Client getDefaultClient(Long id, Exception exception) {
+        EmailClient emailClient = new EmailClient();
+        emailClient.setEmail("default@email.com");
         return Client.builder()
                 .id(id)
-                //.emails(Arrays.asList("default@email.com"))
+                .emails(List.of(emailClient))
+                .remoteError(exception.getMessage())
                 .socialReason("Social Reason")
                 .build();
     }
@@ -38,7 +42,8 @@ public interface ClientRestClient {
         return ids.stream()
                 .map(id -> Client.builder()
                         .id(id)
-                        .socialReason("Social Reason (Fallback Batch)")
+                        .socialReason("Social Reason")
+                        .remoteError(exception.getMessage())
                         .build())
                 .collect(Collectors.toList());
     }

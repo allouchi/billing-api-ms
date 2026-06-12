@@ -2,7 +2,10 @@
 -- =========================================================================
 -- 1. CREATION DE LA TABLE DES ADRESSES
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_adresse` (
+
+DROP TABLE IF EXISTS `t_adresse`;
+
+CREATE TABLE  `t_adresse` (
                                            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                            `code_postal` VARCHAR(20) NOT NULL,
     `localite` VARCHAR(100) NOT NULL,
@@ -25,7 +28,9 @@ VALUES (1, '92500', 'Rueil-Malmaison', '13', 'Domaine de la côte noire', 'Franc
 -- =========================================================================
 -- 2. CREATION DE LA TABLE DES CLIENTS
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_client` (
+DROP TABLE IF EXISTS `t_client`;
+
+CREATE TABLE `t_client` (
                                           `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                           `social_reason` VARCHAR(150) NOT NULL UNIQUE,
     `adresse_id` BIGINT,
@@ -44,7 +49,9 @@ VALUES (1, 'Odyssey Consulting', 1),
 -- =========================================================================
 -- 3. CREATION DE LA TABLE DES EMAILS CLIENTS
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_email_client` (
+DROP TABLE IF EXISTS `t_email_client`;
+
+CREATE TABLE  `t_email_client` (
                                                 `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                                 `email` VARCHAR(100) NOT NULL,
     `client_id` BIGINT NOT NULL,

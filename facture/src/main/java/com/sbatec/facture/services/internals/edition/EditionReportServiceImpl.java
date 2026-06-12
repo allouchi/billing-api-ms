@@ -26,7 +26,7 @@ import java.util.*;
 
 @Slf4j
 @Service
-public class EditionReportImpl implements EditionReportService {
+public class EditionReportServiceImpl implements EditionReportService {
 
     private static final String TIRET = "-";
     private static final String TYPE_FILE = ".pdf";
@@ -39,7 +39,7 @@ public class EditionReportImpl implements EditionReportService {
     private final JavaMailSender factureSender;
 
     // 2. Ajoute le constructeur explicitement ici
-    public EditionReportImpl(JavaMailSender factureSender) {
+    public EditionReportServiceImpl(JavaMailSender factureSender) {
         this.factureSender = factureSender;
     }
 

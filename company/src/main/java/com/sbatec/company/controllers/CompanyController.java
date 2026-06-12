@@ -27,6 +27,7 @@ public class CompanyController {
         return companyService.findBySiret(siret);
     }
 
+
     @GetMapping
     public ResponseEntity<List<Company>> findAll() {
         log.info("Find all companies");

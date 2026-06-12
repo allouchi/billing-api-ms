@@ -9,15 +9,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "company")
 public interface CompanyRestClient {
-    @GetMapping("/api/company/{siret}")
+    @GetMapping("/api/companies/{siret}")
     @CircuitBreaker(name = "company", fallbackMethod = "getDefaultCompany")
     Company findBySiret(@PathVariable String siret);
 
     default Company getDefaultCompany(String siret, Exception exception) {
         return Company.builder()
                 .siret(siret)
-                .codeApe("Code Ape")
-                .socialReason("Social Reason")
+                .codeApe("Default Code Ape")
+                .socialReason("Default Social Reason")
+                .status("Default status")
                 .build();
     }
 }

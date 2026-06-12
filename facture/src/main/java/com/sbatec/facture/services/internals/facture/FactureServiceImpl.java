@@ -23,9 +23,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -44,12 +46,24 @@ public class FactureServiceImpl implements FactureService {
 
 
     /**
+     * @param id
+     * @return Facture
+     */
+    private Facture findFacture(Long id) {
+        Optional<FactureEntity> factureEntity = factureJpaRepository.findById(id);
+        if (factureEntity.isEmpty()) {
+            throw new ServiceException(ErrorCatalog.RESOURCE_NOT_FOUND, "Facture introuvable");
+        }
+        return factureMapper.toDto(factureEntity.get());
+    }
+
+    /**
      *
      * @param id
      * @return Consultant
      */
     private Consultant findConsultant(Long id) {
-        Consultant consultant = consultantRestClient.findBySiret(id);
+        Consultant consultant = consultantRestClient.findById(id);
         if (consultant == null) {
             throw new ServiceException(ErrorCatalog.RESOURCE_NOT_FOUND, "Consultant introuvable");
         }
@@ -61,7 +75,7 @@ public class FactureServiceImpl implements FactureService {
      * @param id
      * @return
      */
-    private Client findClientById(Long id) {
+    private Client findClient(Long id) {
         Client client = clientRestClient.findById(id);
         if (client == null) {
             throw new ServiceException(ErrorCatalog.RESOURCE_NOT_FOUND, "Client introuvable");
@@ -107,7 +121,7 @@ public class FactureServiceImpl implements FactureService {
 
         Company company = findCompany(facture.getSiret());
         Prestation prestation = findPrestation(facture.getPrestationId());
-        Client client = findClientById(prestation.getClientId());
+        Client client = findClient(prestation.getClientId());
         Consultant consultant = findConsultant(prestation.getConsultantId());
         List<Facture> facturesHistory = findFacturesHistory(prestation.getId());
         Facture factureEdit = editionReportService.buildFacture(prestation, facture, facturesHistory);
@@ -191,8 +205,78 @@ public class FactureServiceImpl implements FactureService {
         return factures.map(f -> factureMapper.toDto(f));
     }
 
+
     @Override
     public DataPDF buildPdf(Long id, String pathRoot) throws IOException, URISyntaxException {
-        return null;
+        // 1. Récupération locale (synchrone et rapide)
+        Facture facture = findFacture(id);
+
+        // 2. On lance immédiatement les deux premiers appels distants en parallèle
+        CompletableFuture<Company> companyFuture = CompletableFuture.supplyAsync(() -> findCompany(facture.getSiret()))
+                .exceptionally(ex -> {
+                    log.error("Erreur récupération Company distante pour la facture {}", id, ex);
+                    return null;
+                });
+
+// On combine l'appel Prestation avec le résultat de Company pour valider sa présence
+        CompletableFuture<Prestation> prestationFuture = CompletableFuture.supplyAsync(() -> findPrestation(facture.getPrestationId()))
+                .thenCombineAsync(companyFuture, (prestation, company) -> {
+                    // SI COMPANY EST NULL, ON LÈVE L'EXCEPTION ICI
+                    if (company == null) {
+                        throw new ServiceException(ErrorCatalog.SERVICE_ERROR, "Impossible de charger la prestation car la Company est manquante.");
+                    }
+                    return prestation;
+                })
+                .exceptionally(ex -> {
+                    // Attrape l'erreur de findPrestation OU le ServiceException levé juste au-dessus
+                    log.error("Erreur ou annulation de la Prestation pour la facture {} : {}", id, ex.getMessage());
+                    return null;
+                });
+
+// 3. On enchaîne le Client et le Consultant dès que la Prestation répond (sans bloquer le thread)
+        CompletableFuture<Consultant> consultantFuture = prestationFuture.thenApplyAsync(prestation -> {
+            if (prestation == null)
+                return null; // Sécurité : si la prestation a échoué (ou si company était null), on n'appelle pas le service distant
+            return findConsultant(prestation.getConsultantId());
+        }).exceptionally(ex -> {
+            log.error("Erreur récupération Consultant distant pour la facture {}", id, ex);
+            return null;
+        });
+
+        CompletableFuture<Client> clientFuture = prestationFuture.thenApplyAsync(prestation -> {
+            if (prestation == null) return null; // Sécurité identique
+            return findClient(prestation.getClientId());
+        }).exceptionally(ex -> {
+            log.error("Erreur récupération Client distant pour la facture {}", id, ex);
+            return null;
+        });
+
+        try {
+            // 4. Barrière de synchronisation UNIQUE
+            // On attend la réponse de la Company et des appels qui découlaient de la prestation
+            CompletableFuture.allOf(companyFuture, consultantFuture, clientFuture).join();
+
+            // Récupération instantanée des résultats
+            Company company = companyFuture.join();
+            Consultant consultant = consultantFuture.join();
+            Client client = clientFuture.join();
+            Prestation prestation = prestationFuture.join();
+
+            // Si la prestation (ou la compagnie) a échoué en cours de route, vous pouvez lever l'exception globale ici pour le PDF
+            if (company == null || prestation == null || consultant == null || client == null) {
+                throw new ServiceException(ErrorCatalog.PDF_ERROR, "Données incomplètes pour générer le PDF");
+            }
+
+            Map<String, Object> dataPdf = editionReportService.buildParamsTemplate(company, prestation, consultant, client, facture);
+            byte[] encodedBytes = editionReportService.buildFacturePdFSaucer(dataPdf, pathRoot);
+            String fileName = (String) dataPdf.get("fileName");
+            return DataPDF.builder().facture(facture).
+                    fileContent(encodedBytes)
+                    .contentBase64(Base64.getEncoder().encodeToString(encodedBytes))
+                    .fileName(fileName).build();
+
+        } catch (Exception e) {
+            throw new ServiceException(ErrorCatalog.PDF_ERROR, "Erreur création fichier pdf");
+        }
     }
 }

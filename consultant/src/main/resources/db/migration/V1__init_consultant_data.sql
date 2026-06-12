@@ -2,7 +2,9 @@
 -- =========================================================================
 -- 1. CREATION DE LA TABLE DES CONSULTANTS
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_consultant` (
+DROP TABLE IF EXISTS `t_consultant`;
+
+CREATE TABLE `t_consultant` (
                                               `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                               `last_name` VARCHAR(50) NOT NULL,
     `first_name` VARCHAR(50) NOT NULL,

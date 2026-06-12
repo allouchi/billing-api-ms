@@ -1,7 +1,9 @@
 -- =========================================================================
 -- 1. CREATION DE LA TABLE DES ADRESSES
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_adresse` (
+DROP TABLE IF EXISTS `t_adresse`;
+
+CREATE TABLE  `t_adresse` (
                                            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                            `code_postal` VARCHAR(20) NOT NULL,
     `localite` VARCHAR(100) NOT NULL,
@@ -23,7 +25,9 @@ VALUES (1, '92500', 'Rueil-Malmaison', '13', 'Domaine de la côte noire', 'Franc
 -- =========================================================================
 -- 2. CREATION DE LA TABLE DES ENTREPRISES (COMPANIES)
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_company` (
+DROP TABLE IF EXISTS `t_company`;
+
+CREATE TABLE `t_company` (
                                            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                            `code_ape` VARCHAR(10),
     `numero_bic` VARCHAR(20),

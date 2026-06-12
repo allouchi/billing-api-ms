@@ -7,6 +7,7 @@
 *.war
 *.jar
 *.ear
+.env
 
 target/
 out/

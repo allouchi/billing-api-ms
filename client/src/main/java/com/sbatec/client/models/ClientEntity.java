@@ -31,13 +31,13 @@ public class ClientEntity {
     @Column(name = "social_reason", nullable = false)
     String socialReason;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "adresse_id")
     AdresseEntity adresseClient;
 
     @OneToMany(
             mappedBy = "client",
-            fetch = FetchType.LAZY,
+            fetch = FetchType.EAGER,
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )

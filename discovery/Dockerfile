@@ -1,7 +1,22 @@
-FROM eclipse-temurin:21-jre
+# Étape 1 : Build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# On prend le JAR qui a été proprement généré par le script PowerShell juste avant
-COPY target/*.jar app.jar
+# 1. On copie le POM parent à la racine de /app
+COPY pom.xml /app/pom.xml
+
+# 2. On se place dans le sous-dossier du module "discovery"
+WORKDIR /app/discovery
+COPY discovery/pom.xml .
+
+COPY discovery/src ./src
+
+# 3. On lance le build. Maven trouvera le parent dans "../pom.xml"
+RUN mvn clean package -DskipTests
+
+# Étape 2 : Runtime
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/discovery/target/*.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

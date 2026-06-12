@@ -29,6 +29,7 @@ public interface ConsultantRestClient {
                 .email("Email")
                 .firstName("FirstName")
                 .lastName("LastName")
+                .remoteError(exception.getMessage())
                 .build();
     }
 
@@ -43,6 +44,7 @@ public interface ConsultantRestClient {
                         .email("Email")
                         .firstName("FirstName")
                         .lastName("LastName")
+                        .remoteError(exception.getMessage())
                         .build())
                 .collect(Collectors.toList());
     }

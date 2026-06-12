@@ -2,7 +2,9 @@
 -- =========================================================================
 -- 1. CREATION DE LA TABLE DES ROLES
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_role` (
+DROP TABLE IF EXISTS `t_role`;
+
+CREATE TABLE `t_role` (
                                         `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                         `role_name` VARCHAR(50) NOT NULL UNIQUE,
     `description` VARCHAR(255)
@@ -18,7 +20,9 @@ VALUES ('ROLE_ADMIN', 'Administrateur'),
 -- =========================================================================
 -- 2. CREATION DE LA TABLE DES UTILISATEURS
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `t_user` (
+DROP TABLE IF EXISTS `t_user`;
+
+CREATE TABLE `t_user` (
                                         `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
                                         `email` VARCHAR(100) NOT NULL UNIQUE,
     `first_name` VARCHAR(50) NOT NULL,
@@ -42,7 +46,9 @@ VALUES ('allouchi@hotmail.fr', 'Mustapha', 'Aliane', '$2a$10$7XzFwbCwSWcAhVZQSF7
 -- =========================================================================
 -- 3. CREATION DE LA TABLE DE JOINTURE (USER_ROLES)
 -- =========================================================================
-CREATE TABLE IF NOT EXISTS `user_roles` (
+DROP TABLE IF EXISTS `user_roles`;
+
+CREATE TABLE `user_roles` (
                                             `user_id` BIGINT NOT NULL,
                                             `role_id` BIGINT NOT NULL,
                                             PRIMARY KEY (`user_id`, `role_id`),

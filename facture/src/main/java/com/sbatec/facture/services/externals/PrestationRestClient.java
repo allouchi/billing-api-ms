@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "prestation")
 public interface PrestationRestClient {
-    @GetMapping("/api/prestation/from/{id}")
+    @GetMapping("/api/prestations/{id}")
     @CircuitBreaker(name = "prestation", fallbackMethod = "getDefaultPrestation")
     Prestation findById(@PathVariable Long id);
 

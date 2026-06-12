@@ -1,6 +1,5 @@
 package com.sbatec.authentserver.controllers;
 
-import com.sbatec.authentserver.config.CustomUserDetailsService;
 import com.sbatec.authentserver.config.JwtService;
 import com.sbatec.authentserver.dtos.*;
 import com.sbatec.authentserver.services.internals.RoleService;
@@ -21,6 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 
 @RestController
@@ -31,18 +33,15 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
 
-    static final String SPRING_SECURITY_CONTEXT_KEY = "SPRING_SECURITY_CONTEXT";
-
     UserService userService;
     RoleService roleService;
     AuthenticationManager authManager;
-    CustomUserDetailsService customUserDetailsService;
     JwtService jwtService;
     PasswordEncoder passwordEncoder;
 
 
     @PostMapping({"/login", "/"})
-    public ResponseEntity<AuthResponse> authenticate(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> authenticate(@RequestBody AuthRequest request) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
         log.info("Authentification userName : {}", request.getUsername());
         AuthResponse authResponse = new AuthResponse();
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
@@ -54,8 +53,8 @@ public class UserController {
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
         if (userDetails != null) {
             User user = userService.findByUserName(request.getUsername());
-            String accessToken = jwtService.generateAccessToken((UserDetails) auth.getPrincipal());
-            String refreshToken = jwtService.generateRefreshToken((UserDetails) auth.getPrincipal());
+            String accessToken = jwtService.generateAccessToken(request.getUsername());
+            String refreshToken = jwtService.generateRefreshToken(request.getUsername());
             authResponse.setUser(user);
             authResponse.setRefreshToken(refreshToken);
             authResponse.setAccessToken(accessToken);
@@ -72,18 +71,10 @@ public class UserController {
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
         String refreshToken = request.getRefreshToken();
-        String username = jwtService.extractUsername(refreshToken);
 
-        UserDetails user = customUserDetailsService.loadUserByUsername(username);
-
-        if (!jwtService.isTokenValid(refreshToken, user)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String newAccessToken = jwtService.generateAccessToken(user);
 
         AuthResponse authResponse = new AuthResponse();
-        authResponse.setAccessToken(newAccessToken);
+        //authResponse.setAccessToken(newAccessToken);
         authResponse.setRefreshToken(refreshToken);
         return ResponseEntity.ok(authResponse);
     }

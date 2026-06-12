@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+    <title>Facture</title>
+    <style>
+        body {
+           font-family:  Comic Sans MS;
+            font-size: 12px;
+            color: #333;
+            margin: 5px;
+            padding: 0px
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            /* background-image: url('data:image/jpeg;base64,${logoPath}'); */
+        }
+        .container {
+            border: 2px solid #333;      /* cadre gris foncé */
+            padding: 15px;               /* espace intérieur */
+            max-width: 900px;            /* largeur maximale */
+            margin: auto;               /* centré horizontalement */
+            border-radius: 8px;          /* coins arrondis (optionnel) */
+            background-color: #e6f0fa;
+        }
+
+      .header p,
+        .header h3 {
+        margin: 2px 0;
+        }
+        .company-info {
+            font-size: 13px;
+        }
+        .footer {
+            margin-bottom: 0px;
+            font-size: 10px;
+            text-align: center;
+            border-top: 1px solid #aaa;
+            padding-top: 15px;
+        }
+
+        hr {
+           border: none;
+            height: 2px;
+            background-color: #444;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        table {
+           width: 100%;
+            border-collapse: none;
+            margin-top: 15px;
+        }
+
+        th {
+            background-color: #b3d8ff;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .total {
+            font-weight: bold;
+            background-color: #b3d8ff;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #222;
+        }
+        .align-right {
+            text-align: right;
+        }
+        .center-text {
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- En-tête -->
+    <div class="header">
+        <div class="company-info">
+            <h3><strong>${rsCompany}</strong></h3>
+            <p>${statutCompany}</p>
+            <p>${adresse1Company}<br/>${adresse2Company}</p>
+            <p><strong>${numeroRcs}</strong></p>
+            <p><strong>Siret : ${numeroSiret} - APE : ${numeroApe}</strong></p>
+            <p><strong>TVA : ${numeroTva}</strong></p>
+        </div>
+    </div>
+    <hr style="height: 1px; border: none; background-color: #ccc;"/>
+    <p>${communeCompany}</p>
+    <!-- Informations Client -->
+    <table>
+        <tr>
+            <td><h3><strong>FACTURE N°: ${numeroFacture}</strong></h3></td>
+            <td class="align-right"><h3><strong>${rsClient}</strong></h3></td>
+        </tr>
+        <tr>
+            <td><strong></strong></td>
+            <td class="align-right"><strong>${adresse1Client} <br/> ${adresse2Client}</strong></td>
+        </tr>
+    </table>
+
+    <!-- Détails des prestations -->
+    <div class="section-title">Détail de la prestation :</div>
+    <table>
+        <tr>
+            <th class="center-text">Désignation</th>
+            <th class="center-text">Quantité</th>
+            <th class="center-text">Unité</th>
+            <th class="center-text">Prix unitaire HT</th>
+            <th class="center-text">Prix Total HT</th>
+        </tr>
+        <tr style="width: 20px;"></tr>
+        <tr>
+            <td><strong>${designationLigne1}<br/>${designationLigne2}</strong><br/>${fonctionConsultant}</td>
+            <td class="center-text"><strong>${quantite}</strong></td>
+            <td class="center-text"><strong>Jour</strong></td>
+            <td class="center-text"><strong>${tarifHT} €</strong></td>
+            <td class="center-text"><strong>${montantHT} €</strong></td>
+        </tr>
+    </table>
+
+    <!-- Récapitulatif -->
+    <div class="section-title">Récapitulatif :</div>
+    <table>
+        <tr>
+            <th>Total Hors Taxe (en euros) :</th>
+            <th class="align-right"><strong>${montantHT} €</strong></th>
+        </tr>
+        <tr>
+            <th>Taux de TVA : 20,0 %</th>
+            <th class="align-right"><strong>${montantTva} €</strong></th>
+        </tr>
+        <tr class="total">
+            <th>Total TTC (en euros) :</th>
+            <th class="align-right"><strong>${montantTTC} €</strong></th>
+        </tr>
+    </table>
+
+    <!-- Conditions de paiement -->
+    <div class="section-title">Conditions de paiement</div>
+    <p>
+        Les règlements doivent être effectués par virement bancaire (coordonnées ci-dessous).<br/>
+        Tout retard de paiement entraînera, de plein droit, des pénalités calculées au taux de trois (3) fois le taux
+        d'intérêt légal, à compter de la date d’échéance, soit ${delaiPaiement} jours après la réception de cette
+        facture.
+    </p>
+
+    <!-- Coordonnées bancaires -->
+    <div class="section-title">Coordonnées bancaires</div>
+    <p><strong>${codeIban}<br/>${codeBic}</strong></p>
+
+    <!-- Mode de règlement -->
+    <div class="section-title">Mode de règlement accepté</div>
+    <p>
+        Le règlement s’effectuera en euro, par virement bancaire ou par chèque.<br/>
+        En tant que membre d’un centre de gestion agréé, le règlement par chèque est accepté.
+    </p>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <p>© Copyright ${exercice} - Facture émise par ${rsCompany} – ${adresse1Company} ${adresse2Company}
+        </p>
+    </div>
+</div>
+</body>
+
+</html>

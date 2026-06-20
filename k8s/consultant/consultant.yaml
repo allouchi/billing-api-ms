@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: consultant-service
+  name: consultant-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Donne le temps à Kubernetes de stabiliser le pod sans paniquer
+  selector:
+    matchLabels:
+      app: consultant-service
+  template:
+    metadata:
+      labels:
+        app: consultant-service
+    spec:
+      containers:
+        - name: consultant-service
+          image: consultant-service-image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6000
+              protocol: TCP
+
+          # =========================================================================
+          # OPTIMISATION MÉMOIRE & CONFIGURATION ENVIROMENT
+          # =========================================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Aligne la JVM sur les quotas Kubernetes
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: DISCOVERY_SERVICE_URL
+              value: "http://discovery-service:8761/eureka"
+            - name: SPRING_APPLICATION_NAME
+              value: "consultant"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "app_pass"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://billing-db:3306/consultant-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "app_user"
+            - name: JWK_SET_URL
+              value: "http://authent-service:3000/api/public-key/jwks.json"
+
+          # ============================================================
+          # SONDE DE DÉMARRAGE OPTIMISÉE
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 6000
+            initialDelaySeconds: 20 # 🟢 Légèrement augmenté pour absorber le pic de CPU initial
+            periodSeconds: 5
+            failureThreshold: 50    # 🟢 50 essais * 5s = 250 secondes (Plus de 4 min de marge)
+            timeoutSeconds: 3
+
+          # ============================================================
+          # SONDE DE VIE (Évite les faux positifs en cours de route)
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 6000
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # ============================================================
+          # ALLOCATION DES RESSOURCES (Parfait pour le bootstrap Spring)
+          # ============================================================
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m" # Permet à Spring de consommer 1 cœur entier pour s'initialiser rapidement
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: consultant-service
+  name: consultant-service
+spec:
+  ports:
+    - name: http
+      port: 6000
+      targetPort: 6000
+  selector:
+    app: consultant-service

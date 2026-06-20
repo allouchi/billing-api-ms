@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: gateway-service
+  name: gateway-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Sécurise le temps d'initialisation du routage dynamique
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: gateway-service-image
+          imagePullPolicy: IfNotPresent
+
+          # =========================================================================
+          # OPTIMISATION MÉMOIRE & CONFIGURATION ENVIROMENT
+          # =========================================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Évite l'emballement de la JVM
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: gateway
+            - name: JWK_SET_URL
+              value: http://authent-service:3000/api/public-key/jwks.json
+
+          # 🟢 Allocation stable pour l'aiguillage des requêtes
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          ports:
+            - containerPort: 8181
+              protocol: TCP
+
+          # =========================================================================
+          # SONDES DE SANTÉ OPTIMISÉES
+          # =========================================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8181
+            initialDelaySeconds: 20 # 🟢 Légèrement augmenté pour le confort au boot
+            periodSeconds: 5
+            failureThreshold: 50    # 50 essais * 5s = 250s max (Plus de 4 minutes d'immunité)
+            timeoutSeconds: 3
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8181
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: gateway-service
+  name: gateway-service
+spec:
+  type: LoadBalancer # 🟢 Parfait pour Minikube via `minikube tunnel` si besoin d'un accès externe direct
+  ports:
+    - name: http
+      port: 8181
+      targetPort: 8181
+  selector:
+    app: gateway-service

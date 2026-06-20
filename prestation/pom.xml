@@ -9,6 +9,7 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
+        <relativePath/>
     </parent>
 
     <artifactId>prestation</artifactId>
@@ -20,10 +21,15 @@
 
     <dependencies>
 
+
         <!-- ================= SECURITY (MVC ONLY) ================= -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <dependency>

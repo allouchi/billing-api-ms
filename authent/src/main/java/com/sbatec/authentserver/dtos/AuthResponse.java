@@ -12,15 +12,4 @@ public class AuthResponse {
     private String socialReason;
     private Company company;
 
-    public AuthResponse() {
-    }
-
-    public AuthResponse(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    public AuthResponse(String accessToken, String refreshToken) {
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-    }
 }

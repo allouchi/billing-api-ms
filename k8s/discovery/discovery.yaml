@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-service
+  labels:
+    app: discovery-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Évite que K8s abandonne le déploiement trop vite
+  selector:
+    matchLabels:
+      app: discovery-service
+  template:
+    metadata:
+      labels:
+        app: discovery-service
+    spec:
+      containers:
+        - name: discovery-service
+          image: discovery-service-image
+          imagePullPolicy: IfNotPresent
+
+          # =========================================================
+          # 🟢 OPTIMISATION MÉMOIRE & CONFIG EUREKA
+          # =========================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Contraint la JVM à être économe
+            - name: EUREKA_CLIENT_REGISTER_WITH_EUREKA
+              value: "false"
+            - name: EUREKA_CLIENT_FETCH_REGISTRY
+              value: "false"
+            - name: EUREKA_SERVER_ENABLE_SELF_PRESERVATION
+              value: "false"
+
+          # 🟢 Limitation stricte de la mémoire du conteneur pour soulager Minikube
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          ports:
+            - containerPort: 8761
+              protocol: TCP
+
+          # =========================================================
+          # STARTUP PROBE (Idéal pour laisser le temps à la JVM)
+          # =========================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health # 🟢 Utilisation d'Actuator pour un check de santé natif et fiable
+              port: 8761
+            initialDelaySeconds: 20  # Laisse un peu plus de temps initial
+            periodSeconds: 5
+            failureThreshold: 50     # 50 essais * 5s = 250 secondes (Plus de 4 min d'immunité au boot !)
+            timeoutSeconds: 3
+
+          # =========================================================
+          # LIVENESS PROBE (Prend le relais une fois le startup validé)
+          # =========================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health # 🟢 Aligné sur Actuator
+              port: 8761
+            periodSeconds: 15
+            timeoutSeconds: 3
+
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: discovery-service
+spec:
+  selector:
+    app: discovery-service
+  ports:
+    - name: http
+      port: 8761
+      targetPort: 8761

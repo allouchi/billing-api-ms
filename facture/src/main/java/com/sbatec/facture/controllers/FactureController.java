@@ -12,6 +12,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +35,20 @@ public class FactureController {
 
     FactureService factureService;
     ApplicationProperties resources;
+
+    private String getToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String rawToken = null;
+
+        if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            // Cas 1 : Le JWT est dans le Principal (Le plus standard)
+            if (principal instanceof Jwt jwt) {
+                rawToken = jwt.getTokenValue();
+            }
+        }
+        return (rawToken != null) ? "Bearer " + rawToken : null;
+    }
 
 
     @GetMapping("/noPage/{siret}")
@@ -70,7 +87,7 @@ public class FactureController {
         Files.createDirectories(repertoire);
         return factureService.addFacture(facture,
                 resources.getPathFilePdf(),
-                resources.getFichierSuiviFactures());
+                resources.getFichierSuiviFactures(), getToken());
     }
 
 

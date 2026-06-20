@@ -13,13 +13,14 @@ import java.util.List;
 
 public interface FactureService {
     Facture addFacture(Facture facture,
-                       String pathRoot, String fileSuivi) throws IOException, URISyntaxException;
+                       String pathRoot, String fileSuivi, String token) throws IOException, URISyntaxException;
 
     void deleteFacture(Long factureId);
 
     Facture updateFacture(Facture facture, String rootPath, String fileSuiviName);
 
     Facture updateFacture(Facture facture);
+
 
     Facture findById(Long id);
 
@@ -36,5 +37,5 @@ public interface FactureService {
     Page<Facture> searchFactures(String siret, String search, Pageable pageable);
 
     DataPDF buildPdf(Long id,
-                     String pathRoot) throws IOException, URISyntaxException;
+                     String pathRoot, String token) throws IOException, URISyntaxException;
 }

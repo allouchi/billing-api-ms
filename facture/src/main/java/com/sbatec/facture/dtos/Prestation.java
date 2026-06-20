@@ -24,4 +24,5 @@ public class Prestation {
     Long companyId;
     Long clientId;
     Long consultantId;
+    String remoteError;
 }

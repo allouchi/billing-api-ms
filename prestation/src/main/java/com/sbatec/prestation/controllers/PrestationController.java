@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,9 +24,24 @@ public class PrestationController {
 
 
     @GetMapping(value = "/{siret}")
-    public List<Prestation> getPrestationsBySiret(@PathVariable String siret) {
+    public List<Prestation> getPrestationsBySiret(@AuthenticationPrincipal Jwt jwt, @PathVariable String siret) {
         log.info("get all prestations");
-        return prestationService.findBySiret(siret);
+        if (jwt == null) {
+            return null;
+        }
+        String token = "Bearer " + jwt.getTokenValue();
+        return prestationService.findBySiret(siret, token);
+    }
+
+    @GetMapping(value = "/byId/{id}")
+    public Prestation getPrestationsById(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        log.info("get all prestations");
+        log.info("get all prestations");
+        if (jwt == null) {
+            return null;
+        }
+        String token = "Bearer " + jwt.getTokenValue();
+        return prestationService.findById(id);
     }
 
     /**

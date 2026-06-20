@@ -17,4 +17,5 @@ public class Client {
     String socialReason;
     List<EmailClient> emails;
     Adresse adresseClient;
+    String remoteError;
 }

@@ -9,13 +9,14 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
+        <relativePath/>
     </parent>
 
     <artifactId>gateway</artifactId>
     <packaging>jar</packaging>
 
-    <name>gateway-server</name>
-    <description>gateway-server</description>
+    <name>gateway</name>
+    <description>gateway</description>
 
     <dependencies>
 

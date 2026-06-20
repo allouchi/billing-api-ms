@@ -86,6 +86,7 @@ public class EditionReportServiceImpl implements EditionReportService {
     @Override
     public String factureSender(List<EmailClient> mailsTo, String from, String bcc, String subject, String htmlContent, byte[] attachmentBytes, String fileName) {
 
+
         try {
             MimeMessage message = factureSender.createMimeMessage();
             // Utilisation du helper avec encodage UTF-8

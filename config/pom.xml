@@ -6,11 +6,12 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
+        <relativePath/>
     </parent>
 
     <artifactId>config</artifactId>
     <name>config</name>
-    <description>config-server</description>
+    <description>config</description>
     <packaging>jar</packaging>
 
     <properties>

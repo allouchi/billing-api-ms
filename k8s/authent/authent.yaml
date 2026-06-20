@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: authent-service
+  name: authent-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Évite que K8s abandonne si la JVM met du temps à se lancer
+  selector:
+    matchLabels:
+      app: authent-service
+  template:
+    metadata:
+      labels:
+        app: authent-service
+    spec:
+      containers:
+        - name: authent-service
+          image: authent-service-image
+          imagePullPolicy: IfNotPresent
+
+          # =========================================================================
+          # OPTIMISATION MÉMOIRE & CONFIGURATION ENVIROMENT
+          # =========================================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Limite l'empreinte JVM
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: "authent"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: app_pass
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://billing-db:3306/user-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: app_user
+
+          # 🟢 Allocation de ressources raisonnable pour le dev local
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+
+          # =========================================================================
+          # STARTUP PROBE (Tolérance accrue au démarrage)
+          # =========================================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3000
+            initialDelaySeconds: 20 # Un peu plus de temps de repos au départ
+            periodSeconds: 5
+            failureThreshold: 50    # 50 essais * 5s = 250s (Plus de 4 minutes pour se connecter à Eureka/DB)
+            timeoutSeconds: 3
+
+          # =========================================================================
+          # LIVENESS PROBE (Optionnelle mais recommandée pour la stabilité globale)
+          # =========================================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3000
+            periodSeconds: 15
+            timeoutSeconds: 3
+
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: authent-service
+  name: authent-service
+spec:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  selector:
+    app: authent-service

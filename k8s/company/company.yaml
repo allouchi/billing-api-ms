@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: company-service
+  name: company-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Empêche le timeout Kubernetes lors du bootstrap initial
+  selector:
+    matchLabels:
+      app: company-service
+  template:
+    metadata:
+      labels:
+        app: company-service
+    spec:
+      containers:
+        - name: company-service
+          image: company-service-image
+          imagePullPolicy: IfNotPresent
+
+          # =========================================================================
+          # OPTIMISATION MÉMOIRE & CONFIGURATION ENVIROMENT
+          # =========================================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Contraint la JVM à rester économe
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: "company"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: app_pass
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://billing-db:3306/company-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: app_user
+            - name: JWK_SET_URL
+              value: http://authent-service:3000/api/public-key/jwks.json
+
+          # 🟢 Définition des quotas de ressources pour le cluster local
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+
+          # ============================================================
+          # SONDE DE DÉMARRAGE CORRIGÉE (HTTPGET NATIVE)
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 5000
+            initialDelaySeconds: 20 # 🟢 Un peu plus de répit pour l'initialisation du contexte Spring
+            periodSeconds: 5
+            failureThreshold: 50    # 50 essais * 5s = 250s (Plus de 4 minutes d'immunité au démarrage)
+            timeoutSeconds: 3
+
+          # ============================================================
+          # SONDE DE VIE (Garantit la stabilité post-démarrage)
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 5000
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: company-service
+  name: company-service
+spec:
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  selector:
+    app: company-service

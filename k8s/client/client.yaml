@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: client-service
+  name: client-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Protection contre les dépassements de délai d'initialisation
+  selector:
+    matchLabels:
+      app: client-service
+  template:
+    metadata:
+      labels:
+        app: client-service
+    spec:
+      containers:
+        - name: client-service
+          image: client-service-image
+          imagePullPolicy: IfNotPresent
+
+          # =========================================================================
+          # OPTIMISATION MÉMOIRE & CONFIGURATION ENVIROMENT
+          # =========================================================================
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1" # 🟢 Contraint l'empreinte de la JVM
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_APPLICATION_NAME
+              value: "client"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: app_pass
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://billing-db:3306/client-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: app_user
+            - name: JWK_SET_URL
+              value: http://authent-service:3000/api/public-key/jwks.json
+
+          # 🟢 Gestion de l'allocation des ressources pour ton cluster
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          ports:
+            - containerPort: 7000
+              protocol: TCP
+
+          # ============================================================
+          # 1. SONDE DE DÉMARRAGE (Laisse le temps à Flyway, Hibernate et Eureka)
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 7000
+            initialDelaySeconds: 20 # 🟢 Augmenté légèrement pour laisser l'OS respirer au lancement du conteneur
+            periodSeconds: 5
+            failureThreshold: 50    # 50 essais * 5s = 250s (Plus de 4 minutes pour être prêt)
+            timeoutSeconds: 3
+
+          # ============================================================
+          # 2. SONDE DE VIE (Prend le relais une fois le démarrage réussi)
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 7000
+            periodSeconds: 15       # 🟢 Fréquence de vérification équilibrée
+            timeoutSeconds: 3
+            failureThreshold: 3     # 🟢 Si l'application crash 3 fois d'affilée en cours de route, K8s redémarre le pod
+
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: client-service
+  name: client-service
+spec:
+  ports:
+    - name: http
+      port: 7000
+      targetPort: 7000
+  selector:
+    app: client-service

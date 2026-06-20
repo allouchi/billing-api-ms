@@ -1,0 +1,222 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: sbatec-ecosystem
+
+build:
+  local:
+    push: false
+  artifacts:
+    # --- SERVICES JAVA (MAVEN) ---
+    - image: discovery-service-image
+      context: ./discovery
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar # Adapte selon le chemin de ton Dockerfile
+
+    - image: gateway-service-image
+      context: ./gateway
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: config-service-image
+      context: ./config
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: authent-service-image
+      context: ./authent
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: company-service-image
+      context: ./company
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: prestation-service-image
+      context: ./prestation
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: client-service-image
+      context: ./client
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: consultant-service-image
+      context: ./consultant
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    - image: facture-service-image
+      context: ./facture
+      hooks:
+        before:
+          - command: [ "mvn", "clean", "package", "-DskipTests" ]
+      sync:
+        manual:
+          - src: "target/*.jar"
+            dest: /app.jar
+
+    # --- FRONTEND ANGULAR ---
+    - image: front-service-image
+      context: ../bill-front-ng  # Skaffold se place ICI pour exécuter le hook
+      docker:
+        dockerfile: Dockerfile
+      hooks:
+        before:
+          # CORRECTION : Pas besoin de "cd", Skaffold y est déjà grâce au 'context'
+          - command: [ "cmd", "/c", "cd ..\\bill-front-ng && npm run build -- --configuration=development" ]
+      sync:
+        manual:
+          # Évite de rebuilder l'image si tu modifies juste le HTML/TS.
+          # Les fichiers compilés dans /dist iront directement dans Nginx
+          - src: "dist/**/*"
+            dest: /usr/share/nginx/html # Adapte selon la racine web de ton Dockerfile
+
+manifests:
+  rawYaml:
+    - k8s/**/*.yaml
+
+deploy:
+  statusCheckDeadlineSeconds: 600
+  kubectl: { }
+
+portForward:
+  # FRONTEND (Angular sur le port 4200 local)
+  - resourceType: service
+    resourceName: front-service
+    port: 80
+    localPort: 4200
+
+  # INFRASTRUCTURE (Base de données & Outils)
+  - resourceType: service
+    resourceName: billing-db
+    port: 3306
+    localPort: 3306
+  - resourceType: service
+    resourceName: phpmyadmin
+    port: 80
+    localPort: 8080
+
+  # DISCOVERY (EUREKA)
+  - resourceType: service
+    resourceName: discovery-service
+    port: 8761
+    localPort: 8761
+
+  # CONFIG SERVER
+  - resourceType: service
+    resourceName: config-service
+    port: 8888
+    localPort: 8888
+
+  # GATEWAY
+  - resourceType: service
+    resourceName: gateway-service
+    port: 8181
+    localPort: 8181
+  - resourceType: deployment
+    resourceName: gateway-service
+    port: 5001
+    localPort: 5001
+
+  # AUTHENT SERVICE
+  - resourceType: service
+    resourceName: authent-service
+    port: 3000
+    localPort: 3000
+  - resourceType: deployment
+    resourceName: authent-service
+    port: 5002
+    localPort: 5002
+
+  # COMPANY SERVICE
+  - resourceType: service
+    resourceName: company-service
+    port: 5000
+    localPort: 5000
+  - resourceType: deployment
+    resourceName: company-service
+    port: 5003
+    localPort: 5003
+
+  # PRESTATION SERVICE
+  - resourceType: service
+    resourceName: prestation-service
+    port: 9000
+    localPort: 9000
+  - resourceType: deployment
+    resourceName: prestation-service
+    port: 5004
+    localPort: 5004
+
+  # CLIENT SERVICE
+  - resourceType: service
+    resourceName: client-service
+    port: 7000
+    localPort: 7000
+  - resourceType: deployment
+    resourceName: client-service
+    port: 5005
+    localPort: 5005
+
+  # CONSULTANT SERVICE
+  - resourceType: service
+    resourceName: consultant-service
+    port: 6000
+    localPort: 6000
+  - resourceType: deployment
+    resourceName: consultant-service
+    port: 5006
+    localPort: 5006
+
+  # FACTURE SERVICE
+  - resourceType: service
+    resourceName: facture-service
+    port: 8000
+    localPort: 8000
+  - resourceType: deployment
+    resourceName: facture-service
+    port: 5007
+    localPort: 5007

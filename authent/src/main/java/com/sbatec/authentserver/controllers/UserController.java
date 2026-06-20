@@ -2,6 +2,7 @@ package com.sbatec.authentserver.controllers;
 
 import com.sbatec.authentserver.config.JwtService;
 import com.sbatec.authentserver.dtos.*;
+import com.sbatec.authentserver.services.externals.CompanyRestClient;
 import com.sbatec.authentserver.services.internals.RoleService;
 import com.sbatec.authentserver.services.internals.UserService;
 import jakarta.validation.constraints.NotNull;
@@ -35,6 +36,7 @@ public class UserController {
 
     UserService userService;
     RoleService roleService;
+    CompanyRestClient companyRestClient;
     AuthenticationManager authManager;
     JwtService jwtService;
     PasswordEncoder passwordEncoder;
@@ -53,11 +55,22 @@ public class UserController {
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
         if (userDetails != null) {
             User user = userService.findByUserName(request.getUsername());
-            String accessToken = jwtService.generateAccessToken(request.getUsername());
-            String refreshToken = jwtService.generateRefreshToken(request.getUsername());
-            authResponse.setUser(user);
-            authResponse.setRefreshToken(refreshToken);
-            authResponse.setAccessToken(accessToken);
+            if (user != null) {
+                String accessToken = jwtService.generateAccessToken(user.getEmail());
+                String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+                String tokenHeader = "Bearer " + accessToken;
+                Company company = companyRestClient.findBySiret(tokenHeader, user.getSiret());
+                if (company != null) {
+                    authResponse.setCompany(company);
+                    authResponse.setSocialReason(company.getSocialReason());
+                }
+                authResponse.setUser(user);
+                authResponse.setRefreshToken(refreshToken);
+                authResponse.setAccessToken(accessToken);
+
+            }
+
+
         }
         return ResponseEntity.ok(authResponse);
     }
@@ -70,21 +83,35 @@ public class UserController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
+
+        log.info("======Refresh Token======");
         String refreshToken = request.getRefreshToken();
-
-
         AuthResponse authResponse = new AuthResponse();
-        //authResponse.setAccessToken(newAccessToken);
-        authResponse.setRefreshToken(refreshToken);
+
+        // 1. Valider le refresh token reçu
+        String username = jwtService.validateAndExtractUsername(refreshToken);
+
+        if (username == null) {
+            throw new RuntimeException("Refresh Token invalide ou expiré. Veuillez vous reconnecter.");
+        }
+
+        // 2. Générer un nouvel Access Token (ex: valide 15 minutes / 900 000 ms)
+        String newAccessToken = jwtService.generateToken(username, 900_000);
+
+        // 3. Optionnel : Générer aussi un nouveau Refresh Token (Refresh Token Rotation)
+        // Sinon, vous pouvez ré-utiliser l'ancien s'il lui reste du temps.
+        String newRefreshToken = jwtService.generateToken(username, 604_800_000); //
+
+        authResponse.setAccessToken(newAccessToken);
+        authResponse.setRefreshToken(newRefreshToken);
         return ResponseEntity.ok(authResponse);
     }
 
     @ResponseStatus(code = HttpStatus.OK)
     @GetMapping(value = "/users")
     public List<User> findAllUsers() {
-        log.info("Get all users by Email");
+        log.info("Get all users");
         List<User> users = userService.findAllUsers();
-
         if (users != null && !users.isEmpty()) {
             users.forEach(u -> {
                 u.setPassword("");
@@ -94,7 +121,7 @@ public class UserController {
     }
 
     @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping(value = "/{userName:.+}")
+    @GetMapping(value = "/users/{userName:.+}")
     public User findByUserName(@PathVariable @NotNull String userName) {
         log.info("Get user by Email : {}", userName);
         return userService.findByUserName(userName);
@@ -102,7 +129,7 @@ public class UserController {
 
 
     @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping(value = "/{email:.+}/{password}")
+    @GetMapping(value = "/users/{email:.+}/{password}")
     public User findByUserNameAndPassword(@PathVariable @NotNull String email,
                                           @PathVariable @NotNull String password) {
         log.info("Get user by Email and password : {}", email);
@@ -111,7 +138,7 @@ public class UserController {
     }
 
     @ResponseStatus(code = HttpStatus.CREATED)
-    @PostMapping(value = "/add")
+    @PostMapping(value = "/users/add")
     public User addUser(@RequestBody @NotNull User user) {
         log.info("Add user : {}", user.getEmail());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -119,7 +146,7 @@ public class UserController {
     }
 
     @ResponseStatus(code = HttpStatus.CREATED)
-    @PutMapping(value = "/edit")
+    @PutMapping(value = "/users/edit")
     public User editUser(@RequestBody @NotNull User user) {
         log.info("Add user : {}", user.getEmail());
         if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
@@ -131,13 +158,12 @@ public class UserController {
         return userService.addUser(user);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/users/{id}")
     @ResponseStatus(code = HttpStatus.ACCEPTED)
     public void deleteUser(@PathVariable @NotNull long id) {
         log.info("delete user by id : {}", id);
         userService.deleteUserById(id);
     }
-
 
     @Secured(value = {"ROLE_ADMIN", "ROLE_WRITE", "ROLE_READ"})
     @GetMapping("/roles")

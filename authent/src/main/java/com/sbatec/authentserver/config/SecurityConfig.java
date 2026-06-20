@@ -14,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
 
@@ -46,45 +47,35 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+                // On active CORS pour éviter les blocages avec Angular
+                .cors(cors -> {
+                })
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/login", "/api/refresh-token").permitAll()
+                        // 1. On laisse en accès libre UNIQUEMENT le login, le refresh et la clé publique
+                        .requestMatchers("/api/login", "/api/refresh-token", "/api/public-key/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/**").permitAll()
-                        .requestMatchers("/api/public-key/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
+
+                        // 2. TOUTES les autres routes (y compris /api/users et /api/users/**) requièrent une authentification
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
-                            response.getWriter().write("""
-                                        {
-                                          "error": "Unauthorized",
-                                          "message": "Token manquant ou invalide"
-                                        }
-                                    """);
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json");
-                            response.getWriter().write("""
-                                        {
-                                          "error": "Forbidden",
-                                          "message": "Accès refusé"
-                                        }
-                                    """);
+                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Token manquant ou invalide\"}");
                         })
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationManager(authenticationManager())
-                //.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                // 3. CRUCIAL : On injecte notre filtre JWT AVANT le filtre d'authentification par défaut de Spring
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

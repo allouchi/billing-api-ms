@@ -24,4 +24,6 @@ public class Company {
     String numeroBic;
     Boolean checked;
     Adresse adresse;
+    String remoteError;
+
 }

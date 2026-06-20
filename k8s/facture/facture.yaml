@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: facture-service
+  name: facture-service
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 1200 # 🟢 Donne le temps aux migrations de bases de données de se finaliser
+  selector:
+    matchLabels:
+      app: facture-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: facture-service
+    spec:
+      containers:
+        - name: facture-service
+          image: facture-service-image
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+            - containerPort: 5007
+              name: debug
+              protocol: TCP
+
+          # =========================================================================
+          # 🟢 CHARGEMENT DYNAMIQUE DES VALEURS DEPUIS LE .ENV (VIA CONFIGMAP & SECRET)
+          # =========================================================================
+          envFrom:
+            - configMapRef:
+                name: mail-config
+
+          # =========================================================================
+          # CONFIGURATIONS STRUCTURELLES / INFRASTRUCTURE K8S UNIQUEMENT
+          # =========================================================================
+          env:
+            # 🟢 Fusion des flags de Debug JDWP + Restrictions de RAM pour la JVM
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0 -XX:ActiveProcessorCount=1 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: JWK_SET_URL
+              value: http://authent-service:3000/api/public-key/jwks.json
+
+          volumeMounts:
+            - mountPath: /data/pdf
+              name: volume-pdf
+            - mountPath: /data/csv
+              name: volume-csv
+            - mountPath: /data/libelle-facture
+              name: volume-libelles
+
+          # 🟢 Alignement des quotas sur le profil standard
+          resources:
+            requests:
+              memory: "384Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          # ============================================================
+          # SONDE DE DÉMARRAGE OPTIMISÉE
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 50
+            timeoutSeconds: 3
+
+          # ============================================================
+          # SONDE DE VIE
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8000
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      restartPolicy: Always
+      volumes:
+        - name: volume-pdf
+          emptyDir: { }
+        - name: volume-csv
+          emptyDir: { }
+        - name: volume-libelles
+          emptyDir: { }
+
+---
+
+# =========================================================================
+# 🟢 SECTION SERVICE SÉCURISÉE
+# =========================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: facture-service
+  name: facture-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+    - name: debug
+      port: 5007
+      targetPort: 5007
+  selector:
+    app: facture-service

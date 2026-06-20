@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: config-service
+  name: config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-service
+  template:
+    metadata:
+      labels:
+        app: config-service
+    spec:
+      containers:
+        - env:
+            - name: DISCOVERY_SERVICE_URL
+              value: http://discovery-service:8761/eureka
+            - name: SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS
+              value: file:/app/config-repo
+            - name: SPRING_PROFILES_ACTIVE
+              value: native
+          image: config-service-image
+          imagePullPolicy: IfNotPresent
+          name: config-service
+          ports:
+            - containerPort: 8888
+              protocol: TCP
+
+          # ============================================================
+          # 1. SONDE DE DÉMARRAGE (Laisse le temps au Config Server)
+          # ============================================================
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 60
+
+          # ============================================================
+          # 2. SONDE DE VIE (Prend le relais après le démarrage)
+          # ============================================================
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 40
+            timeoutSeconds: 3
+
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: config-service
+  name: config-service
+spec:
+  ports:
+    - name: http    # 🟢 Corrigé : Nom valide (string DNS)
+      port: 8888    # 🟢 Corrigé : Port d'écoute du Config Server
+      targetPort: 8888 # 🟢 Corrigé : Redirige bien vers le containerPort 8888
+  selector:
+    app: config-service

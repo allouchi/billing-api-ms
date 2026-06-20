@@ -16,4 +16,5 @@ public class Consultant {
     String lastName;
     String fonction;
     String email;
+    String remoteError;
 }

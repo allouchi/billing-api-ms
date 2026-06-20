@@ -1,6 +1,7 @@
 package com.sbatec.authentserver.models;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +30,7 @@ public class UserEntity {
     String firstName;
     @Column(name = "last_name")
     String lastName;
+    @JsonIgnore
     @Column(name = "password", nullable = false)
     String password;
     @Column(name = "activated", length = 1)

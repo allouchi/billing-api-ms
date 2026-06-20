@@ -64,9 +64,10 @@ public class PrestationServiceImpl implements PrestationService {
     }
 
     @Override
-    public List<Prestation> findBySiret(String siret) {
+    public List<Prestation> findBySiret(String siret, String token) {
         List<PrestationEntity> prestationEntities = prestationJpaRepository.findBySiret(siret);
         List<Prestation> prestations = prestationMapper.toDtoList(prestationEntities);
+
 
         if (prestations == null || prestations.isEmpty()) {
             return Collections.emptyList();
@@ -78,8 +79,9 @@ public class PrestationServiceImpl implements PrestationService {
 
         // 2. Déclenchement des appels réseau EN PARALLÈLE
         // Tâche asynchrone pour les Clients
+
         CompletableFuture<Map<Long, Client>> clientsFuture = CompletableFuture.supplyAsync(() ->
-                clientRestClient.findAllByIds(clientIds).stream()
+                clientRestClient.findAllByIds(token, clientIds).stream()
                         .collect(Collectors.toMap(Client::getId, client -> client))
         ).exceptionally(ex -> {
             // En cas d'erreur globale non gérée par le CircuitBreaker, on évite le crash en renvoyant une map vide
@@ -88,7 +90,7 @@ public class PrestationServiceImpl implements PrestationService {
 
         // Tâche asynchrone pour les Consultants
         CompletableFuture<Map<Long, Consultant>> consultantsFuture = CompletableFuture.supplyAsync(() ->
-                consultantRestClient.findAllByIds(consultantIds).stream()
+                consultantRestClient.findAllByIds(token, consultantIds).stream()
                         .collect(Collectors.toMap(Consultant::getId, consultant -> consultant))
         ).exceptionally(ex -> Collections.emptyMap());
 

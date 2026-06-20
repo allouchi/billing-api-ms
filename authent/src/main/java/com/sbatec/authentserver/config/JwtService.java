@@ -2,6 +2,8 @@ package com.sbatec.authentserver.config;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.RSAKey;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +71,36 @@ public class JwtService {
      */
     public String generateRefreshToken(String username) {
         return generateToken(username, REFRESH_TOKEN_EXPIRATION);
+    }
+
+
+    /**
+     * Valide le Refresh Token et extrait le username.
+     *
+     * @param refreshToken Le token de rafraîchissement envoyé par le client
+     * @return Le username si le token est valide, sinon null
+     */
+    public String validateAndExtractUsername(String refreshToken) {
+        try {
+            // Dans JJWT v0.12+, la syntaxe utilise Jwts.parser()
+            Claims claims = Jwts.parser()
+                    // 1. On utilise la CLÉ PUBLIQUE pour vérifier la signature RS256
+                    .verifyWith(keyLoader.loadPublicKey())
+                    // 2. Sécurité : On s'assure que l'émetteur est bien notre service d'authentification
+                    .requireIssuer("auth-service")
+                    .build()
+                    // 3. Décodage et vérification (l'expiration est vérifiée automatiquement ici)
+                    .parseSignedClaims(refreshToken)
+                    .getPayload();
+
+            // Si on arrive ici, le token est valide, intègre et non expiré.
+            return claims.getSubject();
+
+        } catch (JwtException | IllegalArgumentException e) {
+            // Le token est expiré, la signature est fausse (kid ou clé invalide), etc.
+            System.err.println("Échec de la validation du Refresh Token : " + e.getMessage());
+            return null;
+        }
     }
 
 }

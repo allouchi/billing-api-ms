@@ -15,7 +15,7 @@ public interface PrestationService {
 
     Prestation findById(Long id);
 
-    List<Prestation> findBySiret(String siret);
+    List<Prestation> findBySiret(String siret, String token);
 
     void deleteById(Long id);
 

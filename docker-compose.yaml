@@ -31,7 +31,7 @@ services:
   # PHPMYADMIN
   # =========================================================================
   phpmyadmin:
-    image: phpmyadmin-image
+    image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
     restart: unless-stopped
     depends_on:

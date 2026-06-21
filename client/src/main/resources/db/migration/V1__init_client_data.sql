@@ -3,6 +3,8 @@
 -- 1. CREATION DE LA TABLE DES ADRESSES
 -- =========================================================================
 
+DROP TABLE IF EXISTS `t_client`;
+
 DROP TABLE IF EXISTS `t_adresse`;
 
 CREATE TABLE  `t_adresse` (
@@ -28,7 +30,7 @@ VALUES (1, '92500', 'Rueil-Malmaison', '13', 'Domaine de la côte noire', 'Franc
 -- =========================================================================
 -- 2. CREATION DE LA TABLE DES CLIENTS
 -- =========================================================================
-DROP TABLE IF EXISTS `t_client`;
+
 
 CREATE TABLE `t_client` (
                                           `id` BIGINT AUTO_INCREMENT PRIMARY KEY,

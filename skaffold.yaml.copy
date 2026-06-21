@@ -126,7 +126,7 @@ portForward:
   # FRONTEND (Angular sur le port 4200 local)
   - resourceType: service
     resourceName: front-service
-    port: 4200
+    port: 80
     localPort: 4200
 
   # INFRASTRUCTURE (Base de données & Outils)

@@ -30,11 +30,11 @@ spec:
               protocol: TCP
 
           # =========================================================================
-          # 🟢 CHARGEMENT DYNAMIQUE DES VALEURS DEPUIS LE .ENV (VIA CONFIGMAP & SECRET)
+          # 🟢 CHARGEMENT DYNAMIQUE DES VALEURS DEPUIS LE .ENV (VIA CONFIGMAP)
           # =========================================================================
           envFrom:
             - configMapRef:
-                name: mail-config
+                name: variables-config
 
           # =========================================================================
           # CONFIGURATIONS STRUCTURELLES / INFRASTRUCTURE K8S UNIQUEMENT

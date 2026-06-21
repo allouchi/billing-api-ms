@@ -3,7 +3,7 @@
 set +e
 
 # Crée une ConfigMap à partir des variables classiques
-kubectl create configmap mail-config --from-env-file=.env --dry-run=client -o yaml | kubectl apply -f -
+kubectl create configmap variables-config --from-env-file=.env --dry-run=client -o yaml | kubectl apply -f -
 
 
 # ==============================================================================

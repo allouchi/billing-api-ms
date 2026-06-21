@@ -2,7 +2,6 @@
 
 set -e
 
-
 echo "Delete Minikube..."
 # Supprime le cluster défaillant et ses caches
 minikube delete --all --purge

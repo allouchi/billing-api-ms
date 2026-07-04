@@ -128,14 +128,9 @@ public class UserController {
     }
 
 
-    @ResponseStatus(code = HttpStatus.OK)
-    @GetMapping(value = "/users/{email:.+}/{password}")
-    public User findByUserNameAndPassword(@PathVariable @NotNull String email,
-                                          @PathVariable @NotNull String password) {
-        log.info("Get user by Email and password : {}", email);
-        return userService.findByUserNameAndPassword(email, password);
-
-    }
+    // Removed: GET /users/{email}/{password} — passing a password as a URL path segment
+    // leaks it into access logs, browser history and proxies. Authentication goes through
+    // POST /api/login (credentials in the request body over TLS).
 
     @ResponseStatus(code = HttpStatus.CREATED)
     @PostMapping(value = "/users/add")

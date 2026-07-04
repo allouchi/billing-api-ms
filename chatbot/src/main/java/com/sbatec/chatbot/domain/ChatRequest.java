@@ -1,8 +1,12 @@
 package com.sbatec.chatbot.domain;
 
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public record ChatRequest(
-        List<Message> messages
-) {
+@Data
+@NoArgsConstructor // 👈 Très important pour Jackson
+@AllArgsConstructor
+public class ChatRequest {
+    private String request;
 }

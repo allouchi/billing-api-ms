@@ -47,6 +47,8 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+
+
     public void deleteClientById(Long id) {
         clientJpaRepository.deleteById(id);
     }
@@ -83,13 +85,16 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+
     public List<Client> findAllClients() {
         List<ClientEntity> entities = clientJpaRepository.findAll();
         return clientMapper.toDtoList(entities);
     }
 
     @Override
-    public Client findClientById(Long id) {
+
+    public Client findClientById(
+            Long id) {
         Optional<ClientEntity> clientEntity = clientJpaRepository.findById(id);
         return clientEntity.map(entity -> clientMapper.toDto(entity)).orElse(null);
     }

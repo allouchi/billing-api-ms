@@ -1,4 +1,4 @@
-package com.sbatec.client.config;
+package com.sbatec.chatbot.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,21 +14,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
+                // 1. 🟢 On active la configuration CORS définie plus bas
+                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        //.requestMatchers("/api/clients/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/**").permitAll()
-                        .requestMatchers("/mcp/**", "/mcp/sse/**", "/mcp/message/**").permitAll()
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/sse/**", "/mcp/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {
                 }));
         return http.build();
     }
+
 }

@@ -9,19 +9,16 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath/>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>prestation</artifactId>
     <packaging>jar</packaging>
 
     <properties>
-        <java.version>21</java.version>
     </properties>
 
     <dependencies>
-
-
         <!-- ================= SECURITY (MVC ONLY) ================= -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

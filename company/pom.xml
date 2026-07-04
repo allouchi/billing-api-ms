@@ -9,7 +9,7 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath/>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>company</artifactId>
@@ -19,7 +19,7 @@
     </properties>
 
     <dependencies>
-       
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>

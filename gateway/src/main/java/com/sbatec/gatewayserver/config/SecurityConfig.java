@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/authent/**").permitAll()
+                        .pathMatchers("/sse/**", "/mcp/**", "/chatbot/mcp/**", "/chatbot/sse/**").permitAll()
                         .pathMatchers("/actuator/health", "/actuator/**").permitAll()
                         .anyExchange().authenticated()
                 )
@@ -38,7 +39,7 @@ public class SecurityConfig {
         // On autorise spécifiquement votre application Angular
         config.setAllowedOrigins(List.of("http://localhost:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
+        config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // Permet le partage de cookies/headers sécurisés si besoin
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -1,4 +1,4 @@
-package com.sbatec.chatbot.config.prompts.client;
+package com.sbatec.chatbot.prompts.client;
 
 public interface PromptsClient {
 

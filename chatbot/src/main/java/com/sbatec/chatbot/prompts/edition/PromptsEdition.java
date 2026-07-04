@@ -1,4 +1,4 @@
-package com.sbatec.chatbot.config.prompts.edition;
+package com.sbatec.chatbot.prompts.edition;
 
 public interface PromptsEdition {
 

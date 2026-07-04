@@ -1,5 +1,46 @@
 services:
   # =========================================================================
+  # OLLAMA (IA & LLM)
+  # =========================================================================
+  ollama-service:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    healthcheck:
+      test: [ "CMD-SHELL", "ollama list || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+      start_period: 10s # 💡 Augmenté légèrement pour laisser le temps au processus de démarrer
+    volumes:
+      - ollama_data:/root/.ollama # 🔥 Changé en volume nommé (voir explication ci-dessous)
+    networks:
+      - sbatec-net
+
+  # =========================================================================
+  # OPEN WEBUI (Interface Graphique pour Ollama)
+  # =========================================================================
+  open-webui-service:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-service
+    restart: unless-stopped
+    ports:
+      - "2000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-service:11434
+    volumes:
+      - ./webui_data:/app/backend/data
+    depends_on:
+      ollama-service:
+        condition: service_healthy
+    networks:
+      - sbatec-net
+
+  # =========================================================================
   #  SINGLE DATABASE SERVER
   # =========================================================================
   billing-db:
@@ -28,29 +69,11 @@ services:
       retries: 5
 
   # =========================================================================
-  # PHPMYADMIN
-  # =========================================================================
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
-    restart: unless-stopped
-    depends_on:
-      billing-db:
-        condition: service_healthy
-    environment:
-      PMA_HOST: billing-db
-      PMA_PORT: 3306
-    ports:
-      - "8080:80"
-    networks:
-      - sbatec-net
-
-  # =========================================================================
   # DISCOVERY (EUREKA)
   # =========================================================================
   discovery-service:
     build:
-      context: ./discovery  # <--- CORRIGÉ
+      context: ./discovery
       dockerfile: Dockerfile
     container_name: discovery-service
     restart: unless-stopped
@@ -68,7 +91,7 @@ services:
   # =========================================================================
   gateway-service:
     build:
-      context: ./gateway    # <--- CORRIGÉ
+      context: ./gateway
       dockerfile: Dockerfile
     container_name: gateway-service
     restart: unless-stopped
@@ -96,7 +119,7 @@ services:
   # =========================
   config-service:
     build:
-      context: ./config     # <--- CORRIGÉ
+      context: ./config
       dockerfile: Dockerfile
     container_name: config-service
     restart: unless-stopped
@@ -124,7 +147,7 @@ services:
   # =========================================================================
   authent-service:
     build:
-      context: ./authent    # <--- CORRIGÉ
+      context: ./authent
       dockerfile: Dockerfile
     container_name: authent-service
     restart: unless-stopped
@@ -156,7 +179,7 @@ services:
   # =========================================================================
   company-service:
     build:
-      context: ./company    # <--- CORRIGÉ
+      context: ./company
       dockerfile: Dockerfile
     container_name: company-service
     restart: unless-stopped
@@ -189,13 +212,18 @@ services:
   # =========================================================================
   prestation-service:
     build:
-      context: ./prestation # <--- CORRIGÉ
+      context: ./prestation
       dockerfile: Dockerfile
     container_name: prestation-service
     restart: unless-stopped
     ports:
       - "9000:9000"
       - "5004:5004"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/actuator/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     environment:
       - SPRING_APPLICATION_NAME=prestation
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5004
@@ -213,45 +241,22 @@ services:
       - sbatec-net
 
   # =========================================================================
-  # CLIENT SERVICE
-  # =========================================================================
-  client-service:
-    build:
-      context: ./client     # <--- CORRIGÉ
-      dockerfile: Dockerfile
-    container_name: client-service
-    restart: unless-stopped
-    ports:
-      - "7000:7000"
-      - "5005:5005"
-    environment:
-      - SPRING_APPLICATION_NAME=client
-      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-      - JWK_SET_URL=http://authent-service:3000/api/public-key/jwks.json
-      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
-      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/client-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=app_user
-      - SPRING_DATASOURCE_PASSWORD=app_pass
-    depends_on:
-      billing-db:
-        condition: service_healthy
-      discovery-service:
-        condition: service_started
-    networks:
-      - sbatec-net
-
-  # =========================================================================
   # CONSULTANT SERVICE
   # =========================================================================
   consultant-service:
     build:
-      context: ./consultant # <--- CORRIGÉ
+      context: ./consultant
       dockerfile: Dockerfile
     container_name: consultant-service
     restart: unless-stopped
     ports:
       - "6000:6000"
       - "5006:5006"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:6000/actuator/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     environment:
       - SPRING_APPLICATION_NAME=consultant
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
@@ -273,13 +278,18 @@ services:
   # =========================================================================
   facture-service:
     build:
-      context: ./facture    # <--- CORRIGÉ
+      context: ./facture
       dockerfile: Dockerfile
     container_name: facture-service
     restart: unless-stopped
     ports:
       - "8000:8000"
       - "5007:5007"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/actuator/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     environment:
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5007
       - JWK_SET_URL=http://authent-service:3000/api/public-key/jwks.json
@@ -309,6 +319,76 @@ services:
       - sbatec-net
 
   # =========================================================================
+  # CLIENT SERVICE
+  # =========================================================================
+  client-service:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client-service
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+      - "5005:5005"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7000/actuator/health" ]
+      #test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7000/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 25s
+    environment:
+      - SERVER_ADDRESS=0.0.0.0
+      - SPRING_APPLICATION_NAME=client
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - JWK_SET_URL=http://authent-service:3000/api/public-key/jwks.json
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://billing-db:3306/client-db?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_pass
+    depends_on:
+      billing-db:
+        condition: service_healthy
+      discovery-service:
+        condition: service_started
+    networks:
+      - sbatec-net
+  # =========================================================================
+  # CHATBOT SERVER (IA Orchestrator)
+  # =========================================================================
+  chatbot-service:
+    build:
+      context: ./chatbot
+      dockerfile: Dockerfile
+    container_name: chatbot-service
+    restart: unless-stopped
+    ports:
+      - "8686:8686"
+      - "5008:5008"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8686/actuator/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5008
+      - SPRING_APPLICATION_NAME=chatbot
+      - DISCOVERY_SERVICE_URL=http://discovery-service:8761/eureka
+      - LLAMA_URL=http://ollama-service:11434
+      - JWK_SET_URL=http://authent-service:3000/api/public-key/jwks.json
+      - MCP_CONNECTION_URI_MCP=http://client-service:7000/mcp/message
+      - MCP_CONNECTION_URL_SSE=http://client-service:7000/mcp/sse
+    depends_on:
+      ollama-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      client-service:
+        condition: service_healthy  # Attend que le healthcheck long du client-service passe au vert !
+    networks:
+      - sbatec-net
+
+  # =========================================================================
   # ANGULAR FRONTEND
   # =========================================================================
   front-service:
@@ -318,7 +398,7 @@ services:
     container_name: front-service
     restart: unless-stopped
     ports:
-      - "4200:80"
+      - "4201:80"
     networks:
       - sbatec-net
 
@@ -327,6 +407,7 @@ services:
 # =========================================================================
 volumes:
   mysql_global_data:
+  ollama_data:
 
 networks:
   sbatec-net:

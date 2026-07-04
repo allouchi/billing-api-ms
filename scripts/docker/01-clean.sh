@@ -8,6 +8,8 @@ echo "🧹 Cleaning dangling images..."
 
 docker image prune -f
 
-docker compose down --volumes
+#docker compose down --volume
+
+docker compose down
 
 echo "✔ Clean completed"

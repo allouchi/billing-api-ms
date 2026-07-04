@@ -11,6 +11,9 @@
 
 target/
 out/
+ollama_data/
+webui_data/
+
 
 # Spring Boot temp files
 *.pid

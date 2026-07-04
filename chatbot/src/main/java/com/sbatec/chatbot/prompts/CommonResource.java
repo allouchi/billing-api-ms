@@ -1,4 +1,4 @@
-package com.sbatec.chatbot.config.prompts;
+package com.sbatec.chatbot.prompts;
 
 /**
  * Common resource constants
@@ -98,5 +98,4 @@ public interface CommonResource {
         String UNAUTHORIZED = "401";
         String FORBIDDEN = "403";
     }
-
 }

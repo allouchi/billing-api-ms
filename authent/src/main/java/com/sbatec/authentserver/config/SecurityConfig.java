@@ -57,9 +57,9 @@ public class SecurityConfig {
                         // 1. On laisse en accès libre UNIQUEMENT le login, le refresh et la clé publique
                         .requestMatchers("/api/login", "/api/refresh-token", "/api/public-key/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/**").permitAll()
+                        .requestMatchers("/sse/**", "/mcp/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
-
                         // 2. TOUTES les autres routes (y compris /api/users et /api/users/**) requièrent une authentification
                         .anyRequest().authenticated()
                 )

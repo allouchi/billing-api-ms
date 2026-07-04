@@ -18,17 +18,9 @@ echo "🧹 Nettoyage Docker (optionnel)..."
 echo "🛠 Build Maven multi-module..."
 ./scripts/docker/01-build-maven.sh
 
-echo "🐳 Build images Docker..."
+echo "🛠 Build front image"
+./scripts/docker/02-build-front.sh
 
-# Les parenthèses permettent d'entrer et de sortir du dossier proprement
-(cd ./discovery && docker build -t discovery-service .)
-(cd ./gateway && docker build -t gateway-service .)
-(cd ./authent && docker build -t authent-service .)
-(cd ./company && docker build -t company-service .)
-(cd ./consultant && docker build -t consultant-service .)
-(cd ./client && docker build -t client-service .)
-(cd ./prestation && docker build -t prestation-service .)
-(cd ./config && docker build -t config-service .)
 
 echo "🚀 Lancement des services..."
 docker compose up

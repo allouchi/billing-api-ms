@@ -9,7 +9,7 @@
         <groupId>com.sbatec</groupId>
         <artifactId>billing-api-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath/>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>consultant</artifactId>
     <packaging>jar</packaging>
@@ -18,7 +18,7 @@
     </properties>
 
     <dependencies>
-        
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>

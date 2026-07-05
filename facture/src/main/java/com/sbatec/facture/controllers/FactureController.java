@@ -51,6 +51,13 @@ public class FactureController {
     }
 
 
+    // IMS-billing: fetch a single facture by id (edit deep-link / refresh).
+    @GetMapping("/byId/{id}")
+    public Facture getById(@PathVariable Long id) {
+        log.info("find facture by id {}", id);
+        return factureService.findById(id);
+    }
+
     @GetMapping("/noPage/{siret}")
     public List<Facture> findAllBySiret(@PathVariable String siret, Pageable pageable) {
         log.info("findBySiret by siret");

@@ -20,6 +20,7 @@ public interface OperationService {
     Operation addOperation(Operation operation);
 
     void deleteOperationById(Long id);
+    Operation findById(Long id);
 
     List<Operation> findAll();
 

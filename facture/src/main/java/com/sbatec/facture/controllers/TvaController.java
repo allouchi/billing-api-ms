@@ -25,6 +25,13 @@ public class TvaController {
 
     TvaService tvaService;
 
+    // IMS-billing: single TVA by id (edit deep-link / refresh).
+    @GetMapping("/byId/{id}")
+    public Tva getById(@PathVariable Long id) {
+        log.info("find tva by id {}", id);
+        return tvaService.findById(id);
+    }
+
     @GetMapping("/tvasInfo/{siret}/{exercise}")
     public TvaInfo getTvaInfoByExercise(@PathVariable String exercise, @PathVariable String siret) {
         log.info("Get All tvas info by exercise : {} ", exercise);

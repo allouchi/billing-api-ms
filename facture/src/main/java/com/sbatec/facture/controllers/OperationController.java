@@ -27,6 +27,13 @@ public class OperationController {
 
     OperationService operationService;
 
+    // IMS-billing: single operation by id (edit deep-link / refresh).
+    @GetMapping(value = "/byId/{id}")
+    public Operation getById(@PathVariable Long id) {
+        log.info("find operation by id {}", id);
+        return operationService.findById(id);
+    }
+
     @GetMapping(value = "/{siret}/{exercice}/{type}")
     public Page<Operation> getOperations(@PathVariable @NotNull String siret, @PathVariable @NotNull String exercice, @PathVariable @NotNull String type, Pageable pageable) {
         log.info("get all opérations by siret {}", siret);

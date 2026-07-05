@@ -22,6 +22,11 @@ public class OperationServiceImpl implements OperationService {
     OperationMapper operationMapper;
 
     @Override
+    public Operation findById(Long id) {
+        return operationJpaRepository.findById(id).map(operationMapper::toDto).orElse(null);
+    }
+
+    @Override
     public Page<Operation> findBySiret(String siret, Pageable pageable) {
         Page<OperationEntity> operationEntities = operationJpaRepository.findBySiret(siret, pageable);
         return operationEntities.map(operationMapper::toDto);

@@ -32,24 +32,39 @@ public class AIAgent {
     }
 
     public Flux<String> ask(String query) {
-        // Suppression du try-catch classique inutile ici
+
         return chatClient
                 .prompt()
                 .user(query)
                 .stream()
                 .content()
-                // Gérer les erreurs de manière réactive
+              
                 .onErrorResume(e -> {
                     Throwable cause = e;
+
                     while (cause != null) {
                         if (cause instanceof ResourceAccessException) {
                             log.error("Error : Service IA indisponible (connexion refusée)");
-                            return Flux.error(new RuntimeException("Service IA indisponible (connexion refusée)"));
+                            return Flux.error(
+                                    new RuntimeException(
+                                            "Service IA indisponible (connexion refusée)"
+                                    )
+                            );
                         }
                         cause = cause.getCause();
                     }
-                    log.error("Erreur inattendue lors du stream de l'IA", e);
-                    return Flux.error(new RuntimeException("Erreur technique", e));
+
+                    log.error(
+                            "Erreur inattendue lors du stream de l'IA",
+                            e
+                    );
+
+                    return Flux.error(
+                            new RuntimeException(
+                                    "Erreur technique",
+                                    e
+                            )
+                    );
                 });
     }
 }

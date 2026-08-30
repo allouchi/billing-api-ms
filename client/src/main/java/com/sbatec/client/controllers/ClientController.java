@@ -88,6 +88,4 @@ public class ClientController {
         log.info("delete client by id  {}:", id);
         clientService.deleteClientById(id);
     }
-
-
 }

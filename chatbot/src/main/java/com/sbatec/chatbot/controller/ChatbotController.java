@@ -26,9 +26,11 @@ public class ChatbotController {
     // 🟢 CORRECTION : Utilisation de @PostMapping pour s'aligner avec le fetch() du Front
     @PostMapping(value = "/message", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> askBot(@RequestBody ChatRequest chatRequest) {
-        log.info("============ Request from bot : {}", chatRequest.getRequest());
+
+        log.info("======Request from bot : {}", chatRequest.getRequest());
+
         return aiAgent.ask(chatRequest.getRequest())
-                .doOnNext(msg -> log.info("{}", msg))
+                .doOnNext(chunk -> log.info("CHUNK = [{}]", chunk))
                 .doOnError(err -> log.error("error : ", err));
     }
 }
